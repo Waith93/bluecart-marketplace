@@ -1,12 +1,24 @@
-import React from 'react';
-import ProductCategories from './pages/ProductCategories';
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Navbar from "./components/Navbar";
+import Home from "./pages/Home";
+import ProductCategories from "./pages/ProductCategories";
+
 function App() {
   return (
-    <div>
-      <h1>Welcome to Bluecart Marketplace</h1>
-      <ProductCategories />
-    </div>
-  )
+    <Router>
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        
+        <main className="flex-grow">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            
+          </Routes>
+          <ProductCategories />
+        </main>
+      </div>
+    </Router>
+  );
 }
 
-export default App
+export default App;
