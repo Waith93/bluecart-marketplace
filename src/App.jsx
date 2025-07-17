@@ -3,6 +3,7 @@ import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import ProductCategories from "./pages/ProductCategories"; //  Added import
 
+
 function App() {
   return (
     <Router>
