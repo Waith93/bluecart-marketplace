@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import ProductCategories from "./pages/ProductCategories"; //  Added import
+import UserProfileDashboard from "./pages/Profile";
 
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/Product Categories" element={<ProductCategories />} /> {/* Added route */}
+            <Route path="/profile" element={<UserProfileDashboard />} />
           </Routes>
         </main>
 
