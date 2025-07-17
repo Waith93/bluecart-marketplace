@@ -3,6 +3,7 @@ import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import ProductCategories from "./pages/ProductCategories"; // ✅ Added import
 
+
 function App() {
   return (
     <Router>
@@ -12,7 +13,9 @@ function App() {
         <main className="flex-grow">
           <Routes>
             <Route path="/" element={<Home />} />
+
             <Route path="/categories" element={<ProductCategories />} /> {/* ✅ Added route */}
+
           </Routes>
         </main>
 
