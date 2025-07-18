@@ -11,6 +11,7 @@ const Navbar = () => {
         <Link to="/">Home</Link>
         <Link to="/Product Categories">Products</Link>
         <Link to="/favorites">Favorites</Link>
+        <Link to="/search">Search</Link>
       </div>
 
       <div className="space-x-4">
