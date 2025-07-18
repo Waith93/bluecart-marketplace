@@ -96,8 +96,39 @@ const Content = ({ activeTab }) => (
         ))}
       </div>
     ) : activeTab === 'Edit profile' ? (
-      <div className="bg-white p-4 rounded shadow">
-        <p className="text-gray-600">Profile editing form placeholder</p>
+      <div className="bg-white p-6 rounded shadow max-w-lg">
+        <form className="space-y-4">
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Full Name</label>
+            <input
+              type="text"
+              className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              placeholder="John Doe"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Email</label>
+            <input
+              type="email"
+              className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              placeholder="johndoe@example.com"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Shipping Address</label>
+            <input
+              type="text"
+              className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              placeholder="Nairobi, Kenya"
+            />
+          </div>
+          <button
+            type="submit"
+            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
+          >
+            Save Changes
+          </button>
+        </form>
       </div>
     ) : null}
   </div>
