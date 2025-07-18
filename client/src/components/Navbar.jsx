@@ -16,6 +16,18 @@ const Navbar = () => {
 
       <div className="space-x-4">
         <Link
+          to="/Login"
+          className="text-gray-700 border border-gray-300 px-4 py-1 rounded hover:bg-gray-100 transition"
+        >
+          Login
+        </Link>
+        <Link
+          to="/Signup"
+          className="text-gray-700 border border-gray-300 px-4 py-1 rounded hover:bg-gray-100 transition"
+        >
+          Signup
+        </Link>
+        <Link
           to="/profile"
           className="text-blue-600 border border-blue-600 px-4 py-1 rounded hover:bg-blue-600 hover:text-white transition"
         >

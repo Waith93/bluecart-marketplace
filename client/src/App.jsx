@@ -22,6 +22,7 @@ function App() {
             <Route path="/Login" element={<LoginForm/>} />
             <Route path="/Signup" element={<SignupForm/>} />
             <Route path="/Reset-password" element={< ResetPassword/>} />
+            <Route path="/search" element={<SearchBarComponent />} />
           </Routes>
         </main>
 
