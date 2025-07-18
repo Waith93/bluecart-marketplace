@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Footer from "../components/footer"; 
 
 const products = [
   {
@@ -106,9 +107,12 @@ export default function UserProfileDashboard() {
   const [activeTab, setActiveTab] = useState("Favorites");
 
   return (
-    <div className="min-h-screen bg-blue-50 p-4 md:flex md:space-x-4">
+    <div>
+      <div className="min-h-screen bg-blue-50 p-4 md:flex md:space-x-4">
       <Sidebar setActiveTab={setActiveTab} />
       <Content activeTab={activeTab} />
+      </div>
+      <Footer />
     </div>
   );
 }
