@@ -1,2 +1,2 @@
-def test_dummy_model():
+def test_dummy_route():
     assert True
