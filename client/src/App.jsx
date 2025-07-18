@@ -6,6 +6,7 @@ import UserProfileDashboard from "./pages/Profile";
 import LoginForm from "./components/LoginForm";
 import SignupForm from "./components/SignupForm";
 import SearchBarComponent from "./pages/SearchBarPage"; 
+import ResetPassword from "./components/Reset-password";
 
 function App() {
   return (
@@ -20,7 +21,7 @@ function App() {
             <Route path="/profile" element={<UserProfileDashboard />} />
             <Route path="/Login" element={<LoginForm/>} />
             <Route path="/Signup" element={<SignupForm/>} />
-            <Route path="/search" element={<SearchBarComponent />} />
+            <Route path="/Reset-password" element={< ResetPassword/>} />
           </Routes>
         </main>
 
