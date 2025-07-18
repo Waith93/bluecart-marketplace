@@ -5,8 +5,7 @@ import ProductCategories from "./pages/ProductCategories"; //  Added import
 import UserProfileDashboard from "./pages/Profile";
 import LoginForm from "./components/LoginForm";
 import SignupForm from "./components/SignupForm";
-import ResetPassword from "./components/Reset-password";
-
+import SearchBarComponent from "./pages/SearchBarPage"; 
 
 function App() {
   return (
@@ -21,7 +20,7 @@ function App() {
             <Route path="/profile" element={<UserProfileDashboard />} />
             <Route path="/Login" element={<LoginForm/>} />
             <Route path="/Signup" element={<SignupForm/>} />
-            <Route path="/Reset-password" element={<ResetPassword/>} />
+            <Route path="/search" element={<SearchBarComponent />} />
           </Routes>
         </main>
 
