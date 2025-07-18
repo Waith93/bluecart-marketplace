@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Footer from "../components/footer";
 
 function ResetPassword() {
   const [formData, setFormData] = useState({
@@ -31,8 +32,9 @@ function ResetPassword() {
 
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="bg-white p-8 rounded-2xl shadow-md w-full max-w-md">
+    <>
+<div className="bg-gray-50 py-6 px-2 flex flex-col items-center min-h-[50vh]">
+<div className="w-full max-w-md bg-white p-6 rounded-2xl shadow-md flex flex-col justify-center">
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
           Reset your password here!
         </h2>
@@ -106,6 +108,8 @@ function ResetPassword() {
         </form>
       </div>
     </div>
+      <Footer />
+      </>
   );
 }
 
