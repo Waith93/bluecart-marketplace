@@ -1,7 +1,7 @@
 import json
 import pytest
 from app import app, db
-from models import User, SearchHistory, Product, Review, FavoriteProduct
+from models import User, SearchHistory, Product, Review, FavoriteProduct, db
 
 @pytest.fixture(scope='module')
 def test_client():
