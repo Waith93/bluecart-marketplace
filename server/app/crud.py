@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from app import models, schemas
 from datetime import datetime
+from .utils import calculate_cb, calculate_mb
 
 
 # User CRUD Operations
@@ -40,6 +41,9 @@ def get_user_search_history(db: Session, user_id: int):
 
 # product CRUD Operations
 def create_product(db: Session, product: schemas.ProductCreate):
+    product_data = product.dict()
+    product_data["cb_score"] = calculate_cb(product_data)
+    product_data["mb_score"] = calculate_mb(product_data)
     db_product = models.Product(**product.dict())
     db.add(db_product)
     db.commit()
