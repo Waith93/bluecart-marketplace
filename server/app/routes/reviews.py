@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from ..models import Review
 from ..models import User
-from database import get_db
+from db import get_db
 from ..schema import ReviewCreate
 from auth import get_current_user
 
