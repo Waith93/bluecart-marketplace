@@ -53,9 +53,7 @@ const Sidebar = ({ setActiveTab }) => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // Clear user session/localStorage/token if any
-    localStorage.clear();
-    // Redirect to home page
+    localStorage.removeItem("token");
     navigate("/");
   };
 
