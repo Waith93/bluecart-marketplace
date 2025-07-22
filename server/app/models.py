@@ -1,66 +1,77 @@
+from sqlalchemy import Column, Integer, String, Float, Text, ForeignKey, DateTime, Numeric
+from sqlalchemy.orm import relationship, declarative_base
 from datetime import datetime
-from typing import Optional, List
-from sqlmodel import SQLModel, Field, Relationship
+
+Base = declarative_base()
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(50), unique=True, nullable=False)
+    email = Column(String(100), unique=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
+
+    search_history = relationship("SearchHistory", back_populates="user")
+    favorites = relationship("FavoriteProduct", back_populates="user")
 
 
-class User(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    username: str = Field(index=True, nullable=False, max_length=50)
-    email: str = Field(index=True, nullable=False, max_length=100)
-    password_hash: str = Field(nullable=False, max_length=255)
+class SearchHistory(Base):
+    __tablename__ = "search_history"
 
-    search_history: List["SearchHistory"] = Relationship(back_populates="user")
-    favorite_products: List["FavoriteProduct"] = Relationship(back_populates="user")
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    query_text = Column(String(255), nullable=False)
+    searched_at = Column(DateTime, default=datetime.utcnow)
 
-
-class SearchHistory(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="user.id")
-    query_text: str = Field(nullable=False, max_length=255)
-    searched_at: datetime = Field(default_factory=datetime.utcnow)
-
-    user: User = Relationship(back_populates="search_history")
-    products: List["Product"] = Relationship(back_populates="search")
+    user = relationship("User", back_populates="search_history")
+    products = relationship("Product", back_populates="search")
 
 
-class Product(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    search_id: Optional[int] = Field(foreign_key="searchhistory.id")
-    external_product_id: Optional[str] = Field(default=None, max_length=255)
-    product_name: str = Field(nullable=False, max_length=255)
-    platform: str = Field(nullable=False, max_length=50)
-    price: float = Field(nullable=False)
-    delivery_cost: Optional[float] = None
-    payment_mode: Optional[str] = Field(default=None, max_length=50)
-    rating: Optional[float] = None
-    rating_count: Optional[int] = None
-    product_url: Optional[str] = None
-    mb_score: Optional[float] = None
-    cb_score: Optional[float] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    expires_at: Optional[datetime] = None
+class Product(Base):
+    __tablename__ = "products"
 
-    search: Optional[SearchHistory] = Relationship(back_populates="products")
+    id = Column(Integer, primary_key=True, index=True)
+    search_id = Column(Integer, ForeignKey("search_history.id"))
+    external_product_id = Column(String(255))
+    product_name = Column(String(255), nullable=False)
+    platform = Column(String(50), nullable=False)
+    price = Column(Numeric(10, 2), nullable=False)
+    delivery_cost = Column(Numeric(10, 2))
+    payment_mode = Column(String(50))
+    rating = Column(Float)
+    rating_count = Column(Integer)
+    product_url = Column(Text)
+    mb_score = Column(Float)
+    cb_score = Column(Float)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime)
 
-
-class Review(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    external_product_id: Optional[str] = Field(default=None, max_length=255)
-    product_name: Optional[str] = Field(default=None, max_length=255)
-    platform: Optional[str] = Field(default=None, max_length=50)
-    author_name: Optional[str] = Field(default=None, max_length=100)
-    rating: Optional[float] = None
-    content: Optional[str] = None
-    source: Optional[str] = Field(default=None, max_length=50)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    search = relationship("SearchHistory", back_populates="products")
 
 
-class FavoriteProduct(SQLModel, table=True):
-    user_id: int = Field(foreign_key="user.id", primary_key=True)
-    external_product_id: str = Field(primary_key=True, max_length=255)
-    product_name: Optional[str] = None
-    platform: Optional[str] = Field(default=None, max_length=50)
-    price: Optional[float] = None
-    saved_at: datetime = Field(default_factory=datetime.utcnow)
+class Review(Base):
+    __tablename__ = "reviews"
 
-    user: Optional[User] = Relationship(back_populates="favorite_products")
+    id = Column(Integer, primary_key=True, index=True)
+    external_product_id = Column(String(255))
+    product_name = Column(String(255))
+    platform = Column(String(50))
+    author_name = Column(String(100))
+    rating = Column(Float)
+    content = Column(Text)
+    source = Column(String(50))
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class FavoriteProduct(Base):
+    __tablename__ = "favorite_products"
+
+    user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
+    external_product_id = Column(String(255), primary_key=True)
+    product_name = Column(String(255))
+    platform = Column(String(50))
+    price = Column(Numeric(10, 2))
+    saved_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="favorites")
