@@ -1,70 +1,69 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-from sqlalchemy import or_
-from datetime import datetime, timedelta
-from app.models import Product, Review
-from app.schemas import SearchFilters, SearchResponse, ProductResponse, ReviewResponse
-from app.database import get_session
+from fastapi import APIRouter, HTTPException, Query
+from typing import Optional
+import requests
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 router = APIRouter()
 
-def calculate_time_ago(created_at: datetime) -> str:
-    delta = datetime.utcnow() - created_at
-    if delta.days >= 30:
-        return f"{delta.days // 30} month ago"
-    elif delta.days >= 1:
-        return f"{delta.days} days ago"
-    else:
-        return f"{delta.seconds // 3600} hours ago"
+@router.get("/search")
+def search_products(
+    query: str = Query(..., description="Search query (e.g., 'laptop')"),
+    platform: str = Query(..., enum=["amazon", "ebay", "shopify", "walmart"], description="Platform to search")
+):
+    try:
+        if platform == "amazon":
+            url = f"{os.getenv('RAPIDAPI_AMAZON_BASE_URL')}/search"
+            headers = {
+                "x-rapidapi-host": os.getenv("RAPIDAPI_AMAZON_HOST"),
+                "x-rapidapi-key": os.getenv("RAPIDAPI_AMAZON_KEY")
+            }
+            params = {"query": query}
 
-@router.post("/search", response_model=SearchResponse)
-def search_products(filters: SearchFilters, session: Session = Depends(get_session)):
-    product_query = session.query(Product)
+        elif platform == "ebay":
+            url = f"{os.getenv('RAPIDAPI_EBAY_BASE_URL')}/search/{query}"
+            headers = {
+                "x-rapidapi-host": os.getenv("RAPIDAPI_EBAY_HOST"),
+                "x-rapidapi-key": os.getenv("RAPIDAPI_EBAY_KEY")
+            }
+            params = {}
 
-    if filters.keyword:
-        product_query = product_query.filter(Product.product_name.ilike(f"%{filters.keyword}%"))
+        elif platform == "shopify":
+            url = f"{os.getenv('RAPIDAPI_SHOPIFY_BASE_URL')}/product/collections"
+            headers = {
+                "x-rapidapi-host": os.getenv("RAPIDAPI_SHOPIFY_HOST"),
+                "x-rapidapi-key": os.getenv("RAPIDAPI_SHOPIFY_KEY")
+            }
+            params = {"url": f"https://{query}.myshopify.com"}
 
-    if filters.min_price is not None:
-        product_query = product_query.filter(Product.price >= filters.min_price)
-    if filters.max_price is not None:
-        product_query = product_query.filter(Product.price <= filters.max_price)
+        elif platform == "walmart":
+            url = "https://axesso-walmart-data-service.p.rapidapi.com/wlm/walmart-search-by-keyword"
+            headers = {
+                "X-RapidAPI-Key": os.getenv("RAPIDAPI_WALMART_KEY"),
+                "X-RapidAPI-Host": "axesso-walmart-data-service.p.rapidapi.com"
+            }
+            params = {
+                "keyword": query,
+                "page": "1",
+                "sortBy": "best_match"
+            }
 
-    if filters.min_rating is not None:
-        product_query = product_query.filter(Product.rating >= filters.min_rating)
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported platform.")
 
-    if filters.platforms:
-        product_query = product_query.filter(Product.platform.in_(filters.platforms))
+        response = requests.get(url, headers=headers, params=params)
 
-    products = product_query.all()
+        if response.status_code != 200:
+            raise HTTPException(
+                status_code=response.status_code,
+                detail=f"API request failed: {response.text}"
+            )
 
-    product_response = [
-        ProductResponse(
-            platform=prod.platform,
-            product_name=prod.product_name,
-            price=prod.price,
-            delivery_cost=prod.delivery_cost,
-            rating=prod.rating,
-            cb_score=prod.cb_score,
-            mb_ratio=prod.mb_score  # Rename appropriately if needed
-        )
-        for prod in products
-    ]
+        return response.json()
 
-    # --- Optional Reviews ---
-    reviews_query = session.query(Review)
-    if filters.platforms:
-        reviews_query = reviews_query.filter(Review.platform.in_(filters.platforms))
-    reviews = reviews_query.order_by(Review.created_at.desc()).limit(10).all()
-
-    review_response = [
-        ReviewResponse(
-            platform=rev.platform,
-            reviewer=rev.reviewer_name,
-            rating=rev.rating,
-            time_ago=calculate_time_ago(rev.created_at),
-            comment=rev.comment
-        )
-        for rev in reviews
-    ]
-
-    return SearchResponse(products=product_response, reviews=review_response)
+    except requests.exceptions.RequestException as e:
+        raise HTTPException(status_code=500, detail=f"API request error: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

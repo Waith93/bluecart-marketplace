@@ -1,17 +1,15 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from ..models import Review
-from ..models import User
-from db import get_db
-from ..schema import ReviewCreate
-from auth import get_current_user
+from ..models import Review, Product
+from ..database import get_db
+from ..schema import ReviewOut
 
-router = APIRouter()
+router = APIRouter(prefix="/reviews", tags=["Reviews"])
 
-@router.post("/reviews/")
-def create_review(data: ReviewCreate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    review = Review(user_id=user.id, **data.dict())
-    db.add(review)
-    db.commit()
-    db.refresh(review)
-    return review
+@router.get("/product/{product_id}", response_model=list[ReviewOut])
+def get_reviews_for_product(product_id: int, db: Session = Depends(get_db)):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    return db.query(Review).filter(Review.product_id == product_id).all()

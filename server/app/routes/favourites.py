@@ -1,18 +1,28 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from app import models, schemas
+from app import models
 from app.database import get_db
-from app.auth import get_current_user
+from app.routes.auth import get_current_user
 from datetime import datetime
+from app import schema 
 
 router = APIRouter(prefix="/favorites", tags=["favorites"])
 
-@router.get("/", response_model=list[schemas.FavoriteProduct])
-def get_favorites(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+
+@router.get("/", response_model=list[schema.FavoriteProductOut])
+def get_favorites(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
     return db.query(models.FavoriteProduct).filter_by(user_id=current_user.id).all()
 
-@router.post("/", response_model=schemas.FavoriteProduct)
-def add_favorite(fav: schemas.FavoriteProductCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+
+@router.post("/", response_model=schema.FavoriteProduct)
+def add_favorite(
+    fav: schema.FavoriteProductCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
     existing = db.query(models.FavoriteProduct).filter_by(
         user_id=current_user.id,
         external_product_id=fav.external_product_id
@@ -34,8 +44,13 @@ def add_favorite(fav: schemas.FavoriteProductCreate, db: Session = Depends(get_d
     db.refresh(new_fav)
     return new_fav
 
+
 @router.delete("/{external_product_id}", status_code=204)
-def remove_favorite(external_product_id: str, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+def remove_favorite(
+    external_product_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
     fav = db.query(models.FavoriteProduct).filter_by(
         user_id=current_user.id,
         external_product_id=external_product_id
