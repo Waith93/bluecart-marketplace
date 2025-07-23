@@ -23,6 +23,8 @@ class SearchHistory(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     query_text = Column(String(255), nullable=False)
     searched_at = Column(DateTime, default=datetime.utcnow)
+    platform = Column(String)  # Added this
+
 
     user = relationship("User", back_populates="search_history")
     products = relationship("Product", back_populates="search")
