@@ -18,6 +18,15 @@ class UserOut(UserBase):
     class Config:
         orm_mode = True
 
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
 # SEARCH HISTORY SCHEMAS
 
 class SearchHistoryBase(BaseModel):
@@ -34,10 +43,13 @@ class SearchHistoryOut(SearchHistoryBase):
     class Config:
         orm_mode = True
 
+
+# ==============================
 # PRODUCT SCHEMAS
+# ==============================
 
 class ProductBase(BaseModel):
-    external_product_id: str
+    external_product_id: Optional[str]
     product_name: str
     platform: str
     price: Decimal
@@ -61,6 +73,7 @@ class ProductOut(ProductBase):
     class Config:
         orm_mode = True
 
+
 # REVIEW SCHEMAS
 
 class ReviewBase(BaseModel):
@@ -73,7 +86,7 @@ class ReviewBase(BaseModel):
     source: Optional[str]
 
 class ReviewCreate(ReviewBase):
-    pass  
+    pass
 
 class ReviewOut(ReviewBase):
     id: int
@@ -81,6 +94,7 @@ class ReviewOut(ReviewBase):
 
     class Config:
         orm_mode = True
+
 
 # FAVORITE PRODUCT SCHEMAS
 
@@ -99,3 +113,12 @@ class FavoriteProductOut(FavoriteProductBase):
 
     class Config:
         orm_mode = True
+
+class FavoriteProduct(FavoriteProductOut):
+    id: int
+
+    class Config:
+        orm_mode = True
+
+class ProductDetail(ProductOut):
+    reviews: List[ReviewOut] = []
