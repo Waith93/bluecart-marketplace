@@ -2,6 +2,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     DATABASE_URL: str
+    
+    ECRET_KEY: str 
 
     RAPIDAPI_AMAZON_KEY: str = ""
     RAPIDAPI_AMAZON_HOST: str = ""
