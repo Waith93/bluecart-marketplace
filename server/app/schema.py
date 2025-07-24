@@ -44,23 +44,13 @@ class SearchHistoryOut(SearchHistoryBase):
         orm_mode = True
 
 
-# ==============================
 # PRODUCT SCHEMAS
-# ==============================
 
 class ProductBase(BaseModel):
-    external_product_id: Optional[str]
     product_name: str
     platform: str
-    price: Decimal
-    delivery_cost: Optional[Decimal] = None
-    payment_mode: Optional[str] = None
-    rating: Optional[float] = None
-    rating_count: Optional[int] = None
-    product_url: Optional[str] = None
-    mb_score: Optional[float] = None
-    cb_score: Optional[float] = None
-    expires_at: Optional[datetime] = None
+    image_url: Optional[str] = None
+    specs: Optional[dict] = None 
 
 class ProductCreate(ProductBase):
     search_id: int
@@ -69,6 +59,18 @@ class ProductOut(ProductBase):
     id: int
     search_id: int
     created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+# Added productDetail schema here
+    id: str  # change to str from int
+    product_name: str
+    platform: str
+    image_url: Optional[str] = None
+    specs: Optional[dict] = None
+    search_id: Optional[int] = None
+    reviews: List['ReviewOut'] = []  
 
     class Config:
         orm_mode = True
@@ -120,5 +122,3 @@ class FavoriteProduct(FavoriteProductOut):
     class Config:
         orm_mode = True
 
-class ProductDetail(ProductOut):
-    reviews: List[ReviewOut] = []

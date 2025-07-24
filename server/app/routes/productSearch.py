@@ -6,9 +6,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-router = APIRouter()
+router = APIRouter(tags=["Search"])  # Added tags to match main.py
 
-@router.get("/search")
+@router.get("/", response_model=dict)  # Changed to "/" and added response_model
 def search_products(
     query: str = Query(..., description="Search query (e.g., 'laptop')"),
     platform: str = Query(..., enum=["amazon", "ebay", "shopify", "walmart"], description="Platform to search")

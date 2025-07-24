@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Text, ForeignKey, DateTime, Numeric
+from sqlalchemy import Column, Integer, String, Float, Text, ForeignKey, DateTime, Numeric, JSON
 from sqlalchemy.orm import relationship, declarative_base
 from datetime import datetime
 
@@ -23,39 +23,17 @@ class SearchHistory(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     query_text = Column(String(255), nullable=False)
     searched_at = Column(DateTime, default=datetime.utcnow)
-    platform = Column(String)  # Added this
-
+    platform = Column(String)
 
     user = relationship("User", back_populates="search_history")
     products = relationship("Product", back_populates="search")
-
-
-class Product(Base):
-    __tablename__ = "products"
-
-    id = Column(Integer, primary_key=True, index=True)
-    search_id = Column(Integer, ForeignKey("search_history.id"))
-    external_product_id = Column(String(255))
-    product_name = Column(String(255), nullable=False)
-    platform = Column(String(50), nullable=False)
-    price = Column(Numeric(10, 2), nullable=False)
-    delivery_cost = Column(Numeric(10, 2))
-    payment_mode = Column(String(50))
-    rating = Column(Float)
-    rating_count = Column(Integer)
-    product_url = Column(Text)
-    mb_score = Column(Float)
-    cb_score = Column(Float)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    expires_at = Column(DateTime)
-
-    search = relationship("SearchHistory", back_populates="products")
 
 
 class Review(Base):
     __tablename__ = "reviews"
 
     id = Column(Integer, primary_key=True, index=True)
+    product_id = Column(String, ForeignKey('products.id'))  # change int to str
     external_product_id = Column(String(255))
     product_name = Column(String(255))
     platform = Column(String(50))
@@ -64,6 +42,8 @@ class Review(Base):
     content = Column(Text)
     source = Column(String(50))
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    product = relationship("Product", back_populates="reviews")
 
 
 class FavoriteProduct(Base):
@@ -77,3 +57,17 @@ class FavoriteProduct(Base):
     saved_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", back_populates="favorites")
+
+
+class Product(Base):
+    __tablename__ = "products"
+
+    id = Column(String, primary_key=True, index=True)  # change to str
+    search_id = Column(Integer, ForeignKey("search_history.id"))
+    product_name = Column(String(255), nullable=False)
+    platform = Column(String(50), nullable=False)
+    image_url = Column(String(255))
+    specs = Column(JSON)
+
+    search = relationship("SearchHistory", back_populates="products")
+    reviews = relationship("Review", back_populates="product")  # Added missing relationship
