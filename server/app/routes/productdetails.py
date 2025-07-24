@@ -10,9 +10,9 @@ router = APIRouter(tags=["ProductDetails"])
 def get_product(product_id: str, db: Session = Depends(get_db)):
     product = db.query(models.Product)\
         .options(joinedload(models.Product.reviews))\
-        .filter(models.Product.id == product_id).first()
+        .filter(models.Product.id == product_id)\
+        .first()  
     
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    
-    return product
+    return product 

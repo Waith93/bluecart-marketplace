@@ -50,7 +50,7 @@ class ProductBase(BaseModel):
     product_name: str
     platform: str
     image_url: Optional[str] = None
-    specs: Optional[dict] = None 
+    specs: Optional[dict] = None
 
 class ProductCreate(ProductBase):
     search_id: int
@@ -59,18 +59,6 @@ class ProductOut(ProductBase):
     id: int
     search_id: int
     created_at: datetime
-
-    class Config:
-        orm_mode = True
-
-# Added productDetail schema here
-    id: str  # change to str from int
-    product_name: str
-    platform: str
-    image_url: Optional[str] = None
-    specs: Optional[dict] = None
-    search_id: Optional[int] = None
-    reviews: List['ReviewOut'] = []  
 
     class Config:
         orm_mode = True
@@ -98,7 +86,24 @@ class ReviewOut(ReviewBase):
         orm_mode = True
 
 
+
+# PRODUCT DETAIL SCHEMA
+
+class ProductDetail(BaseModel):
+    id: str  # external product id
+    product_name: str
+    platform: str
+    image_url: Optional[str] = None
+    specs: Optional[dict] = None
+    search_id: Optional[int] = None
+    reviews: List[ReviewOut] = []
+
+    class Config:
+        from_attributes = True
+
+
 # FAVORITE PRODUCT SCHEMAS
+
 
 class FavoriteProductBase(BaseModel):
     external_product_id: str
@@ -121,4 +126,3 @@ class FavoriteProduct(FavoriteProductOut):
 
     class Config:
         orm_mode = True
-
