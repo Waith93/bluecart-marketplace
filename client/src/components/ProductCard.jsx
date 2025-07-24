@@ -11,7 +11,6 @@ const ProductCard = () => {
     const fetchProduct = async () => {
       try {
         console.log('Fetching product with ID:', id);
-        // Try different possible endpoint patterns
         const response = await fetch(`http://127.0.0.1:8000/products/${id}`);
         
         console.log('Response status:', response.status);
@@ -25,7 +24,6 @@ const ProductCard = () => {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        // Try to parse as JSON only if response looks like JSON
         if (responseText.trim().startsWith('{') || responseText.trim().startsWith('[')) {
           const data = JSON.parse(responseText);
           setProduct(data);
