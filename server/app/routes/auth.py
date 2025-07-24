@@ -10,7 +10,7 @@ from app.schema import UserCreate, UserLogin, Token
 from app.database import get_db
 from app.config import settings
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(tags=["auth"])
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")

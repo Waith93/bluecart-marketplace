@@ -6,7 +6,7 @@ from app.routes.auth import get_current_user
 from datetime import datetime
 from app import schema 
 
-router = APIRouter(prefix="/favorites", tags=["favorites"])
+router = APIRouter(tags=["Favorites"]) 
 
 
 @router.get("/", response_model=list[schema.FavoriteProductOut])

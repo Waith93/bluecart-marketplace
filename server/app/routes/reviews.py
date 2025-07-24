@@ -4,7 +4,7 @@ from ..models import Review, Product
 from ..database import get_db
 from ..schema import ReviewOut
 
-router = APIRouter(prefix="/reviews", tags=["Reviews"])
+router = APIRouter(tags=["Reviews"])
 
 @router.get("/product/{product_id}", response_model=list[ReviewOut])
 def get_reviews_for_product(product_id: int, db: Session = Depends(get_db)):
