@@ -7,6 +7,7 @@ import LoginForm from "./components/LoginForm";
 import SignupForm from "./components/SignupForm";
 import SearchBarComponent from "./pages/SearchBarPage"; 
 import ResetPassword from "./components/Reset-password";
+import ProductCard from "./components/ProductCard";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
             <Route path="/Signup" element={<SignupForm/>} />
             <Route path="/Reset-password" element={< ResetPassword/>} />
             <Route path="/search" element={<SearchBarComponent />} />
+            <Route path="/products/:id" element={<ProductCard />} />
           </Routes>
         </main>
 
