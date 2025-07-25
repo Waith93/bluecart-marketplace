@@ -5,7 +5,7 @@ from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer
 from app.models import User
-from app.schema import UserCreate, UserLogin, Token
+from app.schema import UserCreate, UserLogin, Token, UserProfile
 from app.database import get_db
 from app.config import settings
 from pydantic import BaseModel  
@@ -77,7 +77,7 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
     if not db_user or not verify_password(user.password, db_user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials.")
     
-    token = create_access_token(data={"sub": db_user.username})
+    token = create_access_token(data={"sub": db_user.email})  # ← Use EMAIL
     return {"access_token": token, "token_type": "bearer"}
 
 @router.post("/reset-password")
@@ -94,3 +94,8 @@ def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
     db.commit()
 
     return {"detail": "Password reset successful."}
+
+@router.get("/profile", response_model=UserProfile)
+def get_user_profile(current_user: User = Depends(get_current_user)):
+    return current_user
+
