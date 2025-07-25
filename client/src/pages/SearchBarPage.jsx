@@ -25,39 +25,116 @@ function SearchBarPage() {
     { id: '200-300', label: '$200 - $300' },
     { id: 'over300', label: 'Over $300' }
   ];
-  const platforms = [
-    { id: 'amazon', name: 'Amazon', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg' },
-    { id: 'walmart', name: 'Walmart', logo: 'https://upload.wikimedia.org/wikipedia/commons/c/ca/Walmart_logo.svg' },
-    { id: 'shopify', name: 'Shopify', logo: 'https://cdn.worldvectorlogo.com/logos/shopify.svg' },
-    { id: 'ebay', name: 'eBay', logo: 'https://upload.wikimedia.org/wikipedia/commons/1/1b/EBay_logo.svg' }
-  ];
+ const platforms = [
+  { 
+    id: 'amazon', 
+    name: 'Amazon', 
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg' 
+  },
+  { 
+    id: 'aliexpress', 
+    name: 'AliExpress', 
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/2/20/AliExpress_logo.svg' 
+  },
+  { 
+    id: 'shopify', 
+    name: 'Shopify', 
+    logo: 'https://cdn.worldvectorlogo.com/logos/shopify.svg' 
+  },
+  { 
+    id: 'ebay', 
+    name: 'eBay', 
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/1/1b/EBay_logo.svg' 
+  }
+];
+
 
   const apiService = {
-    fetchProducts: async (platform, query) => {
-      try {
-        const url = new URL(`${API_BASE_URL}/search`);
-        url.searchParams.append('query', encodeURIComponent(query));
-        url.searchParams.append('platform', platform);
+  fetchProducts: async (platform, query) => {
+    try {
+      const url = new URL(`${API_BASE_URL}/search`);
+      url.searchParams.append('query', encodeURIComponent(query));
+      url.searchParams.append('platform', platform);
 
-        const response = await fetch(url.toString(), {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
-        });
+      console.log(`Fetching from ${platform}:`, url.toString());
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error(`Server error for ${platform}:`, errorData);
-          throw new Error(`HTTP error! status: ${response.status}: ${errorData.detail || JSON.stringify(errorData)}`);
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
         }
+      });
 
-        const data = await response.json();
-        console.log(`API response for platform ${platform}:`, data);
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error(`Server error for ${platform}:`, errorData);
+        throw new Error(`HTTP error! status: ${response.status}: ${errorData.detail || JSON.stringify(errorData)}`);
+      }
 
-        let products = [];
+      const data = await response.json();
+      console.log(`API response for platform ${platform}:`, data);
+
+      let products = [];
+      
+      if (platform === 'aliexpress') {
+        console.log('Parsing AliExpress data structure...');
         
+        if (data.data && data.data.result && Array.isArray(data.data.result.products)) {
+          products = data.data.result.products;
+          console.log('Found products in data.data.result.products:', products.length);
+        } else if (data.data && data.data.data && Array.isArray(data.data.data.products)) {
+          products = data.data.data.products;
+          console.log('Found products in data.data.data.products:', products.length);
+        } else if (data.data && Array.isArray(data.data.products)) {
+          products = data.data.products;
+          console.log('Found products in data.data.products:', products.length);
+        } else if (data.data && data.data.result && Array.isArray(data.data.result)) {
+          products = data.data.result;
+          console.log('Found products in data.data.result array:', products.length);
+        } else if (data.data && data.data.data && Array.isArray(data.data.data)) {
+          products = data.data.data;
+          console.log('Found products in data.data.data array:', products.length);
+        } else if (Array.isArray(data.products)) {
+          products = data.products;
+          console.log('Found products in data.products:', products.length);
+        } else {
+          console.warn('Could not find products array in AliExpress response. Trying to extract from available data...');
+          console.log('Available keys in data:', Object.keys(data));
+          if (data.data) {
+            console.log('Available keys in data.data:', Object.keys(data.data));
+            if (data.data.result) {
+              console.log('Available keys in data.data.result:', Object.keys(data.data.result));
+            }
+            if (data.data.data) {
+              console.log('Available keys in data.data.data:', Object.keys(data.data.data));
+            }
+          }
+          
+          const findProducts = (obj, path = '') => {
+            if (Array.isArray(obj) && obj.length > 0 && typeof obj[0] === 'object') {
+              console.log(`Found potential products array at ${path}:`, obj.length, 'items');
+              return obj;
+            }
+            if (typeof obj === 'object' && obj !== null) {
+              for (const [key, value] of Object.entries(obj)) {
+                const result = findProducts(value, path ? `${path}.${key}` : key);
+                if (result) return result;
+              }
+            }
+            return null;
+          };
+          
+          const foundProducts = findProducts(data);
+          if (foundProducts) {
+            products = foundProducts;
+            console.log('Found products using recursive search:', products.length);
+          } else {
+            products = [];
+            console.log('No products found in AliExpress response');
+          }
+        }
+      } else {
         if (data.data && Array.isArray(data.data.products)) {
           products = data.data.products;
         } else if (Array.isArray(data.products)) {
@@ -70,72 +147,105 @@ function SearchBarPage() {
           console.warn(`Unexpected API response structure for ${platform}:`, data);
           products = [];
         }
+      }
 
-        products = products.map(product => {
-          let price = 0;
-          const rawPrice = product.price?.value || product.price || product.product_price || product.final_price;
-          if (rawPrice !== undefined && rawPrice !== null) {
-            const parsedPrice = parseFloat(rawPrice.toString().replace(/[^0-9.]/g, ''));
-            price = isNaN(parsedPrice) ? 0 : parsedPrice;
-          }
+      console.log(`Raw products found for ${platform}:`, products.length);
 
-          const rating = parseFloat(
+      products = products.map((product, index) => {
+        let price = 0;
+        let rawPrice;
+        
+        if (platform === 'aliexpress') {
+          rawPrice = product.app_sale_price || product.price || product.sale_price || product.final_price;
+        } else {
+          rawPrice = product.price?.value || product.price || product.product_price || product.final_price;
+        }
+        
+        if (rawPrice !== undefined && rawPrice !== null) {
+          const parsedPrice = parseFloat(rawPrice.toString().replace(/[^0-9.]/g, ''));
+          price = isNaN(parsedPrice) ? 0 : parsedPrice;
+        }
+
+        let rating = 0;
+        if (platform === 'aliexpress') {
+          const aliRating = product.evaluate_rate || product.rating || product.star_rating || 0;
+          rating = parseFloat(aliRating);
+        } else {
+          rating = parseFloat(
             product.rating || 
             product.ratings?.average || 
             product.product_star_rating ||
             product.review_rating ||
             0
           );
+        }
 
-          const costBenefit = price > 0 ? rating / price : 0; //cost benefitfunction
+        const costBenefit = price > 0 ? rating / price : 0;
 
-          return {
-            id: product.asin || product.itemId || product.id || product.product_id || `product-${Math.random().toString(36).slice(2)}`,
-            name: product.title || product.name || product.product_title || 'Unknown Product',
-            price: price,
-            rating: rating,
-            costBenefit: costBenefit,
-            platform,
-            image: product.image || 
-                   product.thumbnail || 
-                   product.product_photo || 
-                   product.main_image ||
-                   'https://via.placeholder.com/300x200?text=Product+Image',
-            url: product.url || 
-                 product.link || 
-                 product.product_url ||
-                 product.product_page_url ||
-                 '#'
-          };
-        });
+        let productName = 'Unknown Product';
+        if (platform === 'aliexpress') {
+          productName = product.product_title || product.title || product.name || 'Unknown Product';
+        } else {
+          productName = product.title || product.name || product.product_title || 'Unknown Product';
+        }
+
+        let productImage = 'https://via.placeholder.com/300x200?text=Product+Image';
+        if (platform === 'aliexpress') {
+          productImage = product.image_url || product.main_image || product.image || product.thumbnail || productImage;
+        } else {
+          productImage = product.image || product.thumbnail || product.product_photo || product.main_image || productImage;
+        }
+
+        let productId;
+        if (platform === 'aliexpress') {
+          productId = product.product_id || product.id || product.asin || `aliexpress-${index}-${Math.random().toString(36).slice(2)}`;
+        } else {
+          productId = product.asin || product.itemId || product.id || product.product_id || `${platform}-${index}-${Math.random().toString(36).slice(2)}`;
+        }
 
         return {
-          products,
-          totalCount: data.data?.total_products || data.total || data.total_results || data.totalCount || products.length,
-          hasMore: data.hasMore || products.length >= 20
+          id: productId,
+          name: productName,
+          price: price,
+          rating: rating,
+          costBenefit: costBenefit,
+          platform,
+          image: productImage,
+          url: product.url || 
+               product.link || 
+               product.product_url ||
+               product.product_page_url ||
+               '#'
         };
-      } catch (error) {
-        console.error(`${platform} fetch error:`, error);
-        return { 
-          products: [], 
-          error: error.message,
-          totalCount: 0,
-          hasMore: false
-        };
-      }
+      });
+
+      console.log(`Transformed products for ${platform}:`, products.length);
+      
+      return {
+        products,
+        totalCount: data.data?.total_products || data.total || data.total_results || data.totalCount || products.length,
+        hasMore: data.hasMore || products.length >= 20
+      };
+    } catch (error) {
+      console.error(`${platform} fetch error:`, error);
+      return { 
+        products: [], 
+        error: error.message,
+        totalCount: 0,
+        hasMore: false
+      };
     }
-  };
+  }
+};
 
   const fetchProducts = async (query = search.query, selectedPlatforms = filters.platforms) => {
     setSearch(prev => ({ ...prev, loading: true, error: null }));
     
     try {
-      // If no platforms are selected, use all platforms
       const platformsToSearch = selectedPlatforms.length > 0 ? selectedPlatforms : platforms.map(p => p.id);
       
       console.log('Searching platforms:', platformsToSearch);
       
-      // Fetch from each platform individually
       const results = await Promise.allSettled(
         platformsToSearch.map(platform => apiService.fetchProducts(platform, query))
       );
@@ -149,11 +259,9 @@ function SearchBarPage() {
           if (result.value.error) {
             errors.push(`${platformName}: ${result.value.error}`);
           } else {
-            // Ensure each product has the correct platform assigned
             const productsWithPlatform = result.value.products.map(product => ({
               ...product,
               platform: platformName,
-              // Add a unique ID that includes platform to avoid conflicts
               id: `${platformName}-${product.id}`
             }));
             allProducts.push(...productsWithPlatform);
@@ -178,7 +286,6 @@ function SearchBarPage() {
         if (errors.length === platformsToSearch.length) {
           setSearch(prev => ({ ...prev, error: `Failed to fetch from all platforms: ${errors.join(', ')}` }));
         } else {
-          // Show partial success message
           const successfulPlatforms = platformsToSearch.filter((_, i) => results[i].status === 'fulfilled' && !results[i].value.error);
           console.log(`Successfully fetched from: ${successfulPlatforms.join(', ')}`);
         }
