@@ -1,19 +1,18 @@
 from fastapi import APIRouter, HTTPException, Query, Depends
 from sqlalchemy.orm import Session
 import requests
-import os
-from dotenv import load_dotenv
 from app import models
 from app.database import get_db
+import os
 
-load_dotenv()
 
 router = APIRouter(tags=["Search"])
 
 @router.get("/", response_model=dict)
+
 def search_products(
     query: str = Query(..., description="Search query (e.g., 'laptop')"),
-    platform: str = Query(..., enum=["amazon", "ebay", "shopify", "walmart", "aliexpress"], description="Platform to search"),
+    platform: str = Query(..., enum=["amazon", "ebay", "shopify", "walmart", "alibaba"], description="Platform to search"),
     db: Session = Depends(get_db)
 ):
     try:
@@ -57,15 +56,16 @@ def search_products(
                 "sortBy": "best_match"
             }
 
-        elif platform == "aliexpress":
-            url = f"{os.getenv('RAPIDAPI_ALIEXPRESS_BASE_URL')}/search"
+        elif platform == "alibaba":
+            # Direct Alibaba API URL and API Key provided directly here
+            url = "https://alibaba-datahub.p.rapidapi.com/item_search"
             headers = {
-                "x-rapidapi-host": os.getenv("RAPIDAPI_ALIEXPRESS_HOST"),
-                "x-rapidapi-key": os.getenv("RAPIDAPI_ALIEXPRESS_KEY")
+                "x-rapidapi-host": "alibaba-datahub.p.rapidapi.com",
+                "x-rapidapi-key": "5b448cc458mshd5487c3db1ed748p1cb6afjsnb1ac04f810b8"
             }
             params = {
-                "query": query,
-                "page": "1"
+                "q": query,  
+                "page": "1",  
             }
 
         else:
@@ -81,11 +81,11 @@ def search_products(
 
         data = response.json()
 
-        if platform == "aliexpress":
-            products = data.get("result", {}).get("products", [])
+        if platform == "alibaba":
+            products = data.get("resultList", [])
             
             for item in products:
-                product_id = f"aliexpress-{item.get('product_id')}"
+                product_id = item.get("itemId")
                 if not product_id:
                     continue
                     
@@ -95,9 +95,9 @@ def search_products(
 
                 new_product = models.Product(
                     id=product_id,
-                    product_name=item.get("product_title") or "Unnamed",
+                    product_name=item.get("title") or "Unnamed",
                     platform=platform,
-                    image_url=item.get("image_url") or None,
+                    image_url=item.get("image") or None,
                     specs=item  
                 )
                 db.add(new_product)
