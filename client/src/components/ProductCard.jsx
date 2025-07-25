@@ -3,7 +3,7 @@ import { useParams, useLocation } from "react-router-dom";
 import { Star, ChevronLeft, Loader2 } from 'lucide-react';
 import Footer from "../components/footer";
 
-const ProductCard = () => {
+export const ProductCard = () => {
   const { id } = useParams();
   const location = useLocation();
   const [product, setProduct] = useState(null);
@@ -17,12 +17,36 @@ const ProductCard = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        if (!id || !platform) {
-          throw new Error('Missing product ID or platform');
+        if (!id) {
+          throw new Error('Missing product ID');
         }
 
-        console.log(`Fetching ${platform} product with ID: ${id}`);
-        const url = `http://127.0.0.1:8000/products/${id}?platform=${platform}`;
+        let platformToUse = platform;
+        if (!platformToUse && id) {
+          const parts = id.split('-');
+          if (parts.length >= 2) {
+            platformToUse = parts[0]; 
+          }
+        }
+
+        // Default to amazon if still no platform found
+        if (!platformToUse) {
+          platformToUse = 'amazon';
+          console.warn('No platform specified, defaulting to amazon');
+        }
+
+        console.log(`Fetching ${platformToUse} product with ID: ${id}`);
+        
+        let productId = id;
+        if (id.includes('-') && platformToUse) {
+          const parts = id.split('-');
+          if (parts[0].toLowerCase() === platformToUse.toLowerCase()) {
+            productId = parts.slice(1).join('-');
+          }
+        }
+        
+        console.log(`Using product ID: ${productId} for platform: ${platformToUse}`);
+        const url = `http://127.0.0.1:8000/products/${productId}?platform=${platformToUse}`;
         
         const response = await fetch(url);
         
@@ -32,22 +56,30 @@ const ProductCard = () => {
 
         const data = await response.json();
         
+        console.log('API Response:', data); // Debug log
+        
         if (!data.success) {
           throw new Error(data.detail || 'Failed to fetch product details');
         }
 
-        // Transform API response to match your component's expected format
+        // Check if product data exists
+        if (!data.product || Object.keys(data.product).length === 0) {
+          throw new Error('No product data found in API response');
+        }
+
+        // Transform API response to match  component expected format
         const transformedProduct = {
           id: id,
-          product_name: data.product.name || 'Unknown Product',
-          platform: platform,
-          image_url: data.product.images?.[0] || 'https://via.placeholder.com/300x200?text=Product+Image',
+          product_name: data.product.name || data.product.title || 'Unknown Product',
+          platform: platformToUse,
+          image_url: data.product.images?.[0] || data.product.image || 'https://via.placeholder.com/300x200?text=Product+Image',
           specs: {
-            Price: `$${data.product.price?.toFixed(2) || 'N/A'}`,
+            Price: data.product.price ? `${data.product.price.toFixed(2)}` : 'Price not available',
             Rating: data.product.rating || 'Not rated',
-            ...data.product.specifications
+            ...(data.product.specifications || {}),
+            ...(data.product.specs || {})
           },
-          rawData: data.product // Keep original data for debugging
+          rawData: data // 
         };
 
         setProduct(transformedProduct);
@@ -84,6 +116,15 @@ const ProductCard = () => {
             <p className="mt-2 text-sm text-gray-600">
               Product ID: {id} | Platform: {platform || 'Not specified'}
             </p>
+            <p className="text-sm text-gray-500">
+              API URL: http://127.0.0.1:8000/products/{id}?platform={platform || 'amazon'}
+            </p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="mt-3 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Retry
+            </button>
           </div>
         </div>
         <Footer />
@@ -152,7 +193,7 @@ const ProductCard = () => {
                 {product.specs.Price || 'Price not available'}
               </h2>
               <button className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors">
-                View on {platform}
+                View on {product.platform}
               </button>
             </div>
 
