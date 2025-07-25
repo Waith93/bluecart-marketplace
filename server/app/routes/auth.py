@@ -50,7 +50,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         raise credentials_exception
     return user
 
-@router.post("/register", response_model=Token)
+@router.post("/signup", response_model=Token)
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
     existing = db.query(User).filter((User.email == user.email) | (User.username == user.username)).first()
     if existing:
@@ -67,9 +67,24 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=Token)
 def login_user(user: UserLogin, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.email == user.email).first()
+    db_user = db.query(User).filter(User.username == user.username).first()
     if not db_user or not verify_password(user.password, db_user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials.")
     
-    token = create_access_token(data={"sub": db_user.email})
+    token = create_access_token(data={"sub": db_user.username})
     return {"access_token": token, "token_type": "bearer"}
+
+@router.post("/reset-password")
+def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(
+        User.username == data.username,
+        User.email == data.email
+    ).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    user.password_hash = get_password_hash(data.new_password)
+    db.commit()
+
+    return {"detail": "Password reset successful."}
