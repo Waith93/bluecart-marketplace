@@ -7,7 +7,8 @@ function LoginForm() {
     username: "",
     password: "",
   });
-
+  const [error, setError] = useState(null);  
+  const [loading, setLoading] = useState(false); 
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -17,11 +18,44 @@ function LoginForm() {
     });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Login submitted:", formData);
-    navigate("/");
-  };
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  setError(null);
+
+  try {
+    const response = await fetch("http://localhost:8000/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username: formData.username,
+        password: formData.password,
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      
+      localStorage.setItem("access_token", data.access_token);
+
+      localStorage.setItem("user_data", JSON.stringify({
+        username: formData.username,  
+        email: formData.email
+      }));
+
+      navigate("/profile"); 
+    } else {
+      const errorData = await response.json();
+      setError(errorData.detail || "Invalid credentials");
+    }
+  } catch (error) {
+    console.error("Login error:", error);
+    setError("An error occurred. Please try again.");
+  }
+};
+
 
   return (
     <div className="bg-gray-50 py-10 px-4 flex flex-col items-center">
@@ -29,6 +63,10 @@ function LoginForm() {
         <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">
           Log into your account
         </h2>
+
+        {error && (
+          <div className="text-red-500 text-center mb-4">{error}</div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
@@ -62,8 +100,9 @@ function LoginForm() {
           <button
             type="submit"
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-300"
+            disabled={loading}  // Disable button while loading
           >
-            Login
+            {loading ? "Loading..." : "Login"}
           </button>
         </form>
 
