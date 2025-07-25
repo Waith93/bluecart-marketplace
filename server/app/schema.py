@@ -19,12 +19,17 @@ class UserOut(UserBase):
         orm_mode = True
 
 class UserLogin(BaseModel):
-    email: EmailStr
+    username: str
     password: str
 
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+class ResetPasswordRequest(BaseModel):
+    username: str
+    email: EmailStr
+    new_password: str
 
 
 # SEARCH HISTORY SCHEMAS
@@ -99,7 +104,7 @@ class ProductDetail(BaseModel):
     reviews: List[ReviewOut] = []
 
     class Config:
-        from_attributes = True
+        orm_mode = True 
 
 
 # FAVORITE PRODUCT SCHEMAS

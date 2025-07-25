@@ -1,75 +1,187 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
+import { Star, ChevronLeft, Loader2 } from 'lucide-react';
 import Footer from "../components/footer";
 
 const ProductCard = () => {
   const { id } = useParams();
+  const location = useLocation();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Get platform from query parameters
+  const queryParams = new URLSearchParams(location.search);
+  const platform = queryParams.get('platform');
 
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        console.log('Fetching product with ID:', id);
-        const response = await fetch(`http://127.0.0.1:8000/products/${id}`);
+        if (!id || !platform) {
+          throw new Error('Missing product ID or platform');
+        }
+
+        console.log(`Fetching ${platform} product with ID: ${id}`);
+        const url = `http://127.0.0.1:8000/products/${id}?platform=${platform}`;
         
-        console.log('Response status:', response.status);
-        console.log('Response URL:', response.url);
-        
-        const responseText = await response.text();
-        console.log('Raw response (first 200 chars):', responseText.substring(0, 200));
+        const response = await fetch(url);
         
         if (!response.ok) {
-          console.error('API Error:', response.status);
-          throw new Error(`HTTP error! status: ${response.status}`);
+          throw new Error(`API request failed with status ${response.status}`);
         }
+
+        const data = await response.json();
         
-        if (responseText.trim().startsWith('{') || responseText.trim().startsWith('[')) {
-          const data = JSON.parse(responseText);
-          setProduct(data);
-        } else {
-          throw new Error('Response is not JSON - received HTML page');
+        if (!data.success) {
+          throw new Error(data.detail || 'Failed to fetch product details');
         }
-      } catch (error) {
-        console.error('Failed to fetch product:', error);
+
+        // Transform API response to match your component's expected format
+        const transformedProduct = {
+          id: id,
+          product_name: data.product.name || 'Unknown Product',
+          platform: platform,
+          image_url: data.product.images?.[0] || 'https://via.placeholder.com/300x200?text=Product+Image',
+          specs: {
+            Price: `$${data.product.price?.toFixed(2) || 'N/A'}`,
+            Rating: data.product.rating || 'Not rated',
+            ...data.product.specifications
+          },
+          rawData: data.product // Keep original data for debugging
+        };
+
+        setProduct(transformedProduct);
+      } catch (err) {
+        console.error('Product fetch error:', err);
+        setError(err.message);
       } finally {
         setLoading(false);
       }
     };
 
-    if (id) { // Only fetch if id exists
-      fetchProduct();
-    } else {
-      setLoading(false);
-    }
-  }, [id]);
+    fetchProduct();
+  }, [id, platform]);
 
-  if (loading) return <p className="text-center mt-10">Loading...</p>;
-  if (!product) return <p className="text-center mt-10 text-red-500">Product not found.</p>;
+  if (loading) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <div className="max-w-4xl mx-auto py-8 px-4 flex-grow flex items-center justify-center">
+          <Loader2 className="animate-spin h-8 w-8 text-blue-500" />
+          <span className="ml-2">Loading product details...</span>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <div className="max-w-4xl mx-auto py-8 px-4 flex-grow">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <h2 className="text-lg font-semibold text-red-800">Error Loading Product</h2>
+            <p className="text-red-600">{error}</p>
+            <p className="mt-2 text-sm text-gray-600">
+              Product ID: {id} | Platform: {platform || 'Not specified'}
+            </p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <div className="max-w-4xl mx-auto py-8 px-4 flex-grow">
+          <h2 className="text-lg font-semibold">Product Not Found</h2>
+          <p>We couldn't find details for this product.</p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
       <div className="max-w-4xl mx-auto py-8 px-4 flex-grow">
-        <h1 className="text-2xl font-bold mb-2">{product.product_name}</h1>
-        <p className="text-sm text-gray-500 mb-4">Platform: {product.platform}</p>
-
-        <img
-          src={product.image_url}
-          alt={product.product_name}
-          className="w-full h-64 object-cover rounded-lg mb-4"
-          onError={(e) => (e.target.src = "https://via.placeholder.com/300x200?text=Product+Image")}
-        />
-
-        <div className="bg-white shadow p-4 rounded mb-6">
-          <h2 className="text-lg font-semibold mb-2">Product Details</h2>
-          <ul className="list-disc pl-5">
-            {Object.entries(product.specs || {}).map(([key, value]) => (
-              <li key={key}>
-                <strong>{key}:</strong> {value}
-              </li>
-            ))}
-          </ul>
+        <div className="mb-6">
+          <button 
+            onClick={() => window.history.back()}
+            className="flex items-center text-blue-600 hover:text-blue-800"
+          >
+            <ChevronLeft className="mr-1" size={20} />
+            Back to results
+          </button>
         </div>
+
+        <div className="grid md:grid-cols-2 gap-8">
+          <div>
+            <img
+              src={product.image_url}
+              alt={product.product_name}
+              className="w-full rounded-lg shadow-md"
+              onError={(e) => (e.target.src = "https://via.placeholder.com/500x500?text=Product+Image")}
+            />
+          </div>
+
+          <div>
+            <h1 className="text-3xl font-bold mb-2">{product.product_name}</h1>
+            <div className="flex items-center mb-4">
+              <div className="flex mr-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    size={20}
+                    className={
+                      star <= Math.floor(product.specs.Rating || 0)
+                        ? "fill-yellow-400 text-yellow-400"
+                        : "text-gray-300"
+                    }
+                  />
+                ))}
+              </div>
+              <span className="text-gray-600">
+                {product.specs.Rating || 'No ratings'}
+              </span>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
+              <h2 className="text-xl font-semibold mb-4">
+                {product.specs.Price || 'Price not available'}
+              </h2>
+              <button className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                View on {platform}
+              </button>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              <h2 className="text-xl font-semibold mb-4">Product Details</h2>
+              <ul className="space-y-3">
+                {Object.entries(product.specs).map(([key, value]) => (
+                  <li key={key} className="border-b pb-2 last:border-b-0">
+                    <strong className="text-gray-700">{key}:</strong> {value}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Debug section - remove in production */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-8 bg-gray-50 p-4 rounded-lg">
+            <details>
+              <summary className="text-sm font-medium text-gray-700 cursor-pointer">
+                Debug Information
+              </summary>
+              <pre className="mt-2 text-xs overflow-auto max-h-60 p-2 bg-white rounded">
+                {JSON.stringify(product.rawData, null, 2)}
+              </pre>
+            </details>
+          </div>
+        )}
       </div>
       <Footer />
     </div>
