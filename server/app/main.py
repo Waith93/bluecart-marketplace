@@ -8,6 +8,9 @@ from app.routes.auth import router as auth_router
 from app.routes.favourites import router as favourites_router
 from app.routes.searchHistory import router as searchhistory_router
 from app.routes.productdetails import router as productdetails_router
+from dotenv import load_dotenv
+
+load_dotenv()  # Load environment variables from .env file
 
 app = FastAPI()
 
