@@ -4,11 +4,11 @@ from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer
-
 from app.models import User
 from app.schema import UserCreate, UserLogin, Token
 from app.database import get_db
 from app.config import settings
+from pydantic import BaseModel  
 
 router = APIRouter(tags=["auth"])
 
@@ -18,6 +18,12 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = "HS256"  
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
+
+
+class ResetPasswordRequest(BaseModel):
+    username: str
+    email: str
+    new_password: str
 
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)

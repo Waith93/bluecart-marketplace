@@ -131,3 +131,9 @@ class FavoriteProduct(FavoriteProductOut):
 
     class Config:
         orm_mode = True
+from pydantic import BaseModel
+
+class ResetPasswordRequest(BaseModel):
+    username: str
+    email: str
+    new_password: str

@@ -28,12 +28,10 @@ def search_products(
         elif platform == "ebay":
             # eBay API URL for product search
             url = f"https://api.sandbox.ebay.com/buy/browse/v1/item_summary/search"
-            
             headers = {
                 "Authorization": f"Bearer {os.getenv('EBAY_APP_ID')}",
                 "Content-Type": "application/json"
             }
-
             # Adding eBay-specific parameters
             params = {
                 "q": query,
@@ -76,15 +74,13 @@ def search_products(
 
         # Save each product to DB if it doesn't exist
         products = data.get("productSummaries") or []
-
         for item in products:
             product_id = item.get("itemId")
             if not product_id:
-                continue  
-
+                continue
             existing = db.query(models.Product).filter_by(id=product_id).first()
             if existing:
-                continue 
+                continue
 
             new_product = models.Product(
                 id=product_id,
@@ -93,10 +89,8 @@ def search_products(
                 image_url=item.get("image.imageUrl") or None,
                 specs=item  # Save the entire item for detailed info
             )
-
             db.add(new_product)
-
-        db.commit()
+            db.commit()
 
         return data
 
