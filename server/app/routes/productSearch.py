@@ -8,12 +8,12 @@ from app.database import get_db
 
 load_dotenv()
 
-router = APIRouter(tags=["Search"])  # Added tags to match main.py
+router = APIRouter(tags=["Search"])
 
 @router.get("/", response_model=dict)
 def search_products(
     query: str = Query(..., description="Search query (e.g., 'laptop')"),
-    platform: str = Query(..., enum=["amazon", "ebay", "shopify", "walmart"], description="Platform to search"),
+    platform: str = Query(..., enum=["amazon", "ebay", "shopify", "walmart", "aliexpress"], description="Platform to search"),
     db: Session = Depends(get_db)
 ):
     try:
@@ -32,10 +32,9 @@ def search_products(
                 "Authorization": f"Bearer {os.getenv('EBAY_APP_ID')}",
                 "Content-Type": "application/json"
             }
-            # Adding eBay-specific parameters
             params = {
                 "q": query,
-                "limit": "5",  # You can adjust the limit for number of results
+                "limit": "5",  
             }
 
         elif platform == "shopify":
@@ -58,10 +57,20 @@ def search_products(
                 "sortBy": "best_match"
             }
 
+        elif platform == "aliexpress":
+            url = f"{os.getenv('RAPIDAPI_ALIEXPRESS_BASE_URL')}/search"
+            headers = {
+                "x-rapidapi-host": os.getenv("RAPIDAPI_ALIEXPRESS_HOST"),
+                "x-rapidapi-key": os.getenv("RAPIDAPI_ALIEXPRESS_KEY")
+            }
+            params = {
+                "query": query,
+                "page": "1"
+            }
+
         else:
             raise HTTPException(status_code=400, detail="Unsupported platform.")
 
-        # Perform the API request
         response = requests.get(url, headers=headers, params=params)
 
         if response.status_code != 200:
@@ -72,26 +81,47 @@ def search_products(
 
         data = response.json()
 
-        # Save each product to DB if it doesn't exist
-        products = data.get("productSummaries") or []
-        for item in products:
-            product_id = item.get("itemId")
-            if not product_id:
-                continue
-            existing = db.query(models.Product).filter_by(id=product_id).first()
-            if existing:
-                continue
+        if platform == "aliexpress":
+            products = data.get("result", {}).get("products", [])
+            
+            for item in products:
+                product_id = f"aliexpress-{item.get('product_id')}"
+                if not product_id:
+                    continue
+                    
+                existing = db.query(models.Product).filter_by(id=product_id).first()
+                if existing:
+                    continue
 
-            new_product = models.Product(
-                id=product_id,
-                product_name=item.get("title") or "Unnamed",
-                platform=platform,
-                image_url=item.get("image.imageUrl") or None,
-                specs=item  # Save the entire item for detailed info
-            )
-            db.add(new_product)
-            db.commit()
+                new_product = models.Product(
+                    id=product_id,
+                    product_name=item.get("product_title") or "Unnamed",
+                    platform=platform,
+                    image_url=item.get("image_url") or None,
+                    specs=item  
+                )
+                db.add(new_product)
+                
+        else:
+            products = data.get("productSummaries") or []
+            for item in products:
+                product_id = item.get("itemId")
+                if not product_id:
+                    continue
+                existing = db.query(models.Product).filter_by(id=product_id).first()
+                if existing:
+                    continue
 
+                new_product = models.Product(
+                    id=product_id,
+                    product_name=item.get("title") or "Unnamed",
+                    platform=platform,
+                    image_url=item.get("image.imageUrl") or None,
+                    specs=item 
+                )
+                db.add(new_product)
+        
+        db.commit()
         return data
 
     except requests.exceptions.RequestException as e:

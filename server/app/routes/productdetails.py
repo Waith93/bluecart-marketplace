@@ -8,12 +8,13 @@ from dotenv import load_dotenv
 from app.database import get_db
 from app import models 
 from typing import Dict, Any, Optional 
+
 router = APIRouter(tags=["Product Details"])
 
 @router.get("/{product_id}", response_model=Dict[str, Any])
 def get_product_detail(
     product_id: str,
-    platform: str = Query(..., enum=["amazon", "ebay", "shopify", "walmart"]),
+    platform: str = Query(..., enum=["amazon", "ebay", "shopify", "walmart", "aliexpress"]),
     db: Session = Depends(get_db)
 ):
     try:
@@ -53,6 +54,14 @@ def get_product_detail(
                 "X-RapidAPI-Host": os.getenv("RAPIDAPI_WALMART_HOST")
             }
             params = {"usItemId": product_id}
+
+        elif platform == "aliexpress":
+            url = f"{os.getenv('RAPIDAPI_ALIEXPRESS_BASE_URL')}/product"
+            headers = {
+                "X-RapidAPI-Key": os.getenv("RAPIDAPI_ALIEXPRESS_KEY"),
+                "X-RapidAPI-Host": os.getenv("RAPIDAPI_ALIEXPRESS_HOST")
+            }
+            params = {"productId": product_id}
 
         response = requests.get(url, headers=headers, params=params, timeout=10)
         response.raise_for_status()
@@ -100,6 +109,25 @@ def get_product_detail(
                 "description": data.get("shortDescription", ""),
                 "images": data.get("imageInfo", {}).get("imageUrls", []),
                 "specifications": data.get("specifications", [])
+            }
+        elif platform == "aliexpress":
+            product_data = {
+                "id": product_id,
+                "name": data.get("product_title", "Unknown Product"),
+                "price": float(data.get("app_sale_price", 0)) if data.get("app_sale_price") else 0,
+                "description": data.get("product_description", "No description available"),
+                "images": [data.get("image_url")] if data.get("image_url") else [],
+                "specifications": {
+                    "Store": data.get("store_name"),
+                    "Sales": data.get("volume"),
+                    "Original Price": data.get("original_price"),
+                    "Discount": data.get("discount"),
+                    **data.get("properties", {})
+                },
+                "rating": float(data.get("evaluate_rate", 0)) if data.get("evaluate_rate") else 0,
+                "rating_count": data.get("evaluation_count", 0),
+                "availability": "Available" if data.get("app_sale_price") else "Unknown",
+                "url": data.get("product_url", "#")
             }
 
         if not product_data.get("name"):

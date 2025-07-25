@@ -3,6 +3,57 @@ import { useParams, useLocation } from "react-router-dom";
 import { Star, ChevronLeft, Loader2 } from 'lucide-react';
 import Footer from "../components/footer";
 
+// Helper functions to handle different platform data structures
+const getProductName = (product, platform) => {
+  switch (platform) {
+    case 'aliexpress':
+      return product.product_title || product.title || 'Unknown Product';
+    case 'amazon':
+      return product.name || product.title || 'Unknown Product';
+    default:
+      return product.name || product.title || 'Unknown Product';
+  }
+};
+
+const getProductImage = (product, platform) => {
+  switch (platform) {
+    case 'aliexpress':
+      return product.image_url || product.images?.[0] || 'https://via.placeholder.com/300x200?text=Product+Image';
+    case 'amazon':
+      return product.images?.[0] || product.image || 'https://via.placeholder.com/300x200?text=Product+Image';
+    default:
+      return product.images?.[0] || product.image || 'https://via.placeholder.com/300x200?text=Product+Image';
+  }
+};
+
+const getProductSpecs = (product, platform) => {
+  const baseSpecs = {};
+  
+  switch (platform) {
+    case 'aliexpress':
+      baseSpecs.Price = product.app_sale_price || product.price || 'Price not available';
+      baseSpecs.Rating = product.evaluate_rate || 'Not rated';
+      baseSpecs['Original Price'] = product.original_price || 'N/A';
+      baseSpecs['Sales'] = product.volume || 'N/A';
+      baseSpecs['Store Name'] = product.store_name || 'N/A';
+      break;
+    case 'amazon':
+      baseSpecs.Price = product.price ? `${product.price.toFixed(2)}` : 'Price not available';
+      baseSpecs.Rating = product.rating || 'Not rated';
+      break;
+    default:
+      baseSpecs.Price = product.price ? `${product.price.toFixed(2)}` : 'Price not available';
+      baseSpecs.Rating = product.rating || 'Not rated';
+  }
+  
+  // Add any additional specifications
+  return {
+    ...baseSpecs,
+    ...(product.specifications || {}),
+    ...(product.specs || {})
+  };
+};
+
 export const ProductCard = () => {
   const { id } = useParams();
   const location = useLocation();
@@ -21,11 +72,13 @@ export const ProductCard = () => {
           throw new Error('Missing product ID');
         }
 
+        // Extract platform from ID if not provided in query params
         let platformToUse = platform;
         if (!platformToUse && id) {
+          // Try to extract platform from ID format (e.g., "amazon-B0B2D77YB8")
           const parts = id.split('-');
           if (parts.length >= 2) {
-            platformToUse = parts[0]; 
+            platformToUse = parts[0]; // "amazon" from "amazon-B0B2D77YB8"
           }
         }
 
@@ -37,8 +90,10 @@ export const ProductCard = () => {
 
         console.log(`Fetching ${platformToUse} product with ID: ${id}`);
         
+        // Try different ID formats
         let productId = id;
         if (id.includes('-') && platformToUse) {
+          // Remove platform prefix if it exists (e.g., "amazon-B0B2D77YB8" -> "B0B2D77YB8")
           const parts = id.split('-');
           if (parts[0].toLowerCase() === platformToUse.toLowerCase()) {
             productId = parts.slice(1).join('-');
@@ -67,7 +122,7 @@ export const ProductCard = () => {
           throw new Error('No product data found in API response');
         }
 
-        // Transform API response to match  component expected format
+        // Transform API response to match your component's expected format
         const transformedProduct = {
           id: id,
           product_name: data.product.name || data.product.title || 'Unknown Product',
@@ -79,7 +134,7 @@ export const ProductCard = () => {
             ...(data.product.specifications || {}),
             ...(data.product.specs || {})
           },
-          rawData: data // 
+          rawData: data // Keep full API response for debugging
         };
 
         setProduct(transformedProduct);
