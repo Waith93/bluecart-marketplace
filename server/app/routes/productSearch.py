@@ -1,6 +1,5 @@
 from fastapi import APIRouter, HTTPException, Query, Depends
 from sqlalchemy.orm import Session
-from typing import Optional
 import requests
 import os
 from dotenv import load_dotenv
@@ -27,12 +26,19 @@ def search_products(
             params = {"query": query}
 
         elif platform == "ebay":
-            url = f"{os.getenv('RAPIDAPI_EBAY_BASE_URL')}/products"
+            # eBay API URL for product search
+            url = f"https://api.sandbox.ebay.com/buy/browse/v1/item_summary/search"
+            
             headers = {
-                "x-rapidapi-host": os.getenv("RAPIDAPI_EBAY_HOST"),
-                "x-rapidapi-key": os.getenv("RAPIDAPI_EBAY_KEY")
+                "Authorization": f"Bearer {os.getenv('EBAY_APP_ID')}",
+                "Content-Type": "application/json"
             }
-            params = {"query": query, "page": "1"}
+
+            # Adding eBay-specific parameters
+            params = {
+                "q": query,
+                "limit": "5",  # You can adjust the limit for number of results
+            }
 
         elif platform == "shopify":
             url = f"{os.getenv('RAPIDAPI_SHOPIFY_BASE_URL')}/product/collections"
@@ -57,6 +63,7 @@ def search_products(
         else:
             raise HTTPException(status_code=400, detail="Unsupported platform.")
 
+        # Perform the API request
         response = requests.get(url, headers=headers, params=params)
 
         if response.status_code != 200:
@@ -68,10 +75,10 @@ def search_products(
         data = response.json()
 
         # Save each product to DB if it doesn't exist
-        products = data.get("products") or data.get("searchResults") or data.get("items") or []
-        
+        products = data.get("productSummaries") or []
+
         for item in products:
-            product_id = item.get("product_id") or item.get("asin") or item.get("id")
+            product_id = item.get("itemId")
             if not product_id:
                 continue  
 
@@ -80,13 +87,12 @@ def search_products(
                 continue 
 
             new_product = models.Product(
-    id=product_id,
-    product_name=item.get("title") or item.get("name") or "Unnamed",
-    platform=platform,
-    image_url=item.get("image") or item.get("imageUrl") or None,
-    specs=item 
-)
-
+                id=product_id,
+                product_name=item.get("title") or "Unnamed",
+                platform=platform,
+                image_url=item.get("image.imageUrl") or None,
+                specs=item  # Save the entire item for detailed info
+            )
 
             db.add(new_product)
 
