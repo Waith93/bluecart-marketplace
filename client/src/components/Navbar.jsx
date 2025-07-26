@@ -10,8 +10,8 @@ const Navbar = () => {
       <div className="space-x-6 text-gray-700 font-medium hidden md:flex">
         <Link to="/">Home</Link>
         <Link to="/Product Categories">Products</Link>
-        <Link to="/favorites">Favorites</Link>
         <Link to="/search">Search</Link>
+        <Link to="/history">History</Link>
       </div>
 
       <div className="space-x-4">
