@@ -8,6 +8,8 @@ import SignupForm from "./components/SignupForm";
 import SearchBarComponent from "./pages/SearchBarPage"; 
 import ResetPassword from "./components/Reset-password";
 import ProductCard from "./components/ProductCard";
+import HistoryPage from "./pages/History"; 
+
 
 function App() {
   return (
@@ -25,6 +27,7 @@ function App() {
             <Route path="/Reset-password" element={< ResetPassword/>} />
             <Route path="/search" element={<SearchBarComponent />} />
             <Route path="/products/:id" element={<ProductCard />} />
+            <Route path="/history" element={<HistoryPage />} /> 
           </Routes>
         </main>
 
