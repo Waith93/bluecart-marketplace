@@ -45,11 +45,16 @@ function SearchBarPage() {
     id: 'ebay', 
     name: 'eBay', 
     logo: 'https://upload.wikimedia.org/wikipedia/commons/1/1b/EBay_logo.svg' 
+  },
+  { 
+    id: 'target', 
+    name: 'Target', 
+    logo: 'https://fakestoreapi.com/icons/icon-512x512.png' 
   }
 ];
 
 
- const apiService = {
+const apiService = {
   fetchProducts: async (platform, query) => {
     try {
       const url = new URL(`${API_BASE_URL}/search`);
@@ -81,7 +86,6 @@ function SearchBarPage() {
         console.log('Parsing Alibaba data structure...');
         console.log('Full response:', JSON.stringify(data, null, 2));
         
-        // Handle different possible response structures from Alibaba API
         if (data.result && data.result.resultList && Array.isArray(data.result.resultList)) {
           products = data.result.resultList;
           console.log('Found products in data.result.resultList:', products.length);
@@ -173,6 +177,25 @@ function SearchBarPage() {
             console.log('No products found in AliExpress response');
           }
         }
+        //fake store api function here
+      } else if (platform === 'target') {
+        console.log('Parsing Target data structure...');
+
+        // Handle Target API response structure
+        if (Array.isArray(data)) {
+          products = data; // Here we look for products in the root array
+          console.log('Found products in root array:', products.length);
+        } else if (data.products && Array.isArray(data.products)) {
+          products = data.products; // Here we look for products nested under a "products" key
+          console.log('Found products in data.products:', products.length);
+        } else if (data.data && Array.isArray(data.data)) {
+          products = data.data; //Here we look for products nested under a "data" key
+          console.log('Found products in data.data:', products.length);
+        } else {
+          console.warn('Could not find products array in Fake Store API response.');
+          console.log('Available keys in data:', Object.keys(data));
+          products = []; //go back to empty array if no products found
+        }
       } else {
         // Handle other platforms (Amazon, eBay, Shopify, Walmart)
         if (data.data && Array.isArray(data.data.products)) {
@@ -234,6 +257,28 @@ function SearchBarPage() {
               averageRating: firstProduct.averageRating,
               star: firstProduct.star
             }
+          });
+        } else if (platform === 'target') {
+          const firstProduct = products[0];
+          console.log('Target product field analysis:', {
+            possibleTitles: {
+              title: firstProduct.title,
+              name: firstProduct.name
+            },
+            possiblePrices: {
+              price: firstProduct.price
+            },
+            possibleImages: {
+              image: firstProduct.image
+            },
+            possibleIds: {
+              id: firstProduct.id
+            },
+            possibleRatings: {
+              rating: firstProduct.rating
+            },
+            category: firstProduct.category,
+            description: firstProduct.description
           });
         }
       }
@@ -301,6 +346,12 @@ function SearchBarPage() {
           });
         } else if (platform === 'aliexpress') {
           rawPrice = product.app_sale_price || product.price || product.sale_price || product.final_price;
+        } else if (platform === 'target') {
+          rawPrice = product.price;
+          console.log(`Target price extraction for product ${index}:`, {
+            raw: rawPrice,
+            productKeys: Object.keys(product)
+          });
         } else {
           rawPrice = product.price?.value || product.price || product.product_price || product.final_price;
         }
@@ -360,6 +411,16 @@ function SearchBarPage() {
         } else if (platform === 'aliexpress') {
           const aliRating = product.evaluate_rate || product.rating || product.star_rating || 0;
           rating = parseFloat(aliRating);
+        } else if (platform === 'target') {
+          // Fake Store API has rating in nested structure
+          const targetRating = product.rating || 0;
+          rating = parseFloat(targetRating);
+          
+          console.log(`Target rating extraction for product ${index}:`, {
+            raw: targetRating,
+            parsed: rating,
+            ratingStructure: product.rating
+          });
         } else {
           rating = parseFloat(
             product.rating || 
@@ -393,6 +454,14 @@ function SearchBarPage() {
           });
         } else if (platform === 'aliexpress') {
           productName = product.product_title || product.title || product.name || 'Unknown Product';
+        } else if (platform === 'target') {
+          productName = product.title || product.name || 'Unknown Product';
+          
+          console.log(`Target title extraction for product ${index}:`, {
+            final: productName,
+            title: product.title,
+            name: product.name
+          });
         } else {
           productName = product.title || product.name || product.product_title || 'Unknown Product';
         }
@@ -428,6 +497,13 @@ function SearchBarPage() {
           });
         } else if (platform === 'aliexpress') {
           productImage = product.image_url || product.main_image || product.image || product.thumbnail || productImage;
+        } else if (platform === 'target') {
+          productImage = product.image || productImage;
+
+          console.log(`Target image extraction for product ${index}:`, {
+            final: productImage,
+            image: product.image
+          });
         } else {
           productImage = product.image || product.thumbnail || product.product_photo || product.main_image || productImage;
         }
@@ -453,6 +529,13 @@ function SearchBarPage() {
           });
         } else if (platform === 'aliexpress') {
           productId = product.product_id || product.id || product.asin || `aliexpress-${index}-${Math.random().toString(36).slice(2)}`;
+        } else if (platform === 'target') {
+          productId = product.id || `target-${index}-${Math.random().toString(36).slice(2)}`;
+
+          console.log(`Target ID extraction for product ${index}:`, {
+            final: productId,
+            id: product.id
+          });
         } else {
           productId = product.asin || product.itemId || product.id || product.product_id || `${platform}-${index}-${Math.random().toString(36).slice(2)}`;
         }
@@ -473,6 +556,14 @@ function SearchBarPage() {
             itemUrl: itemData.itemUrl,
             url: itemData.url,
             link: itemData.link
+          });
+        } else if (platform === 'target') {
+          productUrl = product.url || `https://fakestoreapi.com/products/${product.id}` || '#';
+          
+          console.log(`Fake Store API URL extraction for product ${index}:`, {
+            final: productUrl,
+            url: product.url,
+            id: product.id
           });
         } else {
           productUrl = product.url || 
