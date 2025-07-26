@@ -25,32 +25,11 @@ function SearchBarPage() {
     { id: '200-300', label: '$200 - $300' },
     { id: 'over300', label: 'Over $300' }
   ];
- const platforms = [
-  { 
-    id: 'amazon', 
-    name: 'Amazon', 
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg' 
-  },
-  { 
-    id: 'alibaba', 
-    name: 'AliBaba', 
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/0/0c/Alibaba_Group_logo.svg'
-  },
-  { 
-    id: 'shopify', 
-    name: 'Shopify', 
-    logo: 'https://cdn.worldvectorlogo.com/logos/shopify.svg' 
-  },
-  { 
-    id: 'ebay', 
-    name: 'eBay', 
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/1/1b/EBay_logo.svg' 
-  },
-  { 
-    id: 'target', 
-    name: 'Target', 
-    logo: 'https://fakestoreapi.com/icons/icon-512x512.png' 
-  }
+const platforms = [
+  { id: 'amazon', name: 'Amazon', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg' },
+  { id: 'alibaba', name: 'Alibaba', logo: 'https://seeklogo.com/images/A/alibaba-logo-7943CB3E8B-seeklogo.com.png'},
+  { id: 'ebay', name: 'eBay', logo: 'https://upload.wikimedia.org/wikipedia/commons/1/1b/EBay_logo.svg' },
+  { id: 'target', name: 'Target', logo: 'https://upload.wikimedia.org/wikipedia/commons/9/9a/Target_logo.svg' }
 ];
 
 
@@ -129,56 +108,7 @@ const apiService = {
           const foundArray = findArrays(data);
           products = foundArray || [];
         }
-      } else if (platform === 'aliexpress') {
-        console.log('Parsing AliExpress data structure...');
-        
-        if (data.data && data.data.result && Array.isArray(data.data.result.products)) {
-          products = data.data.result.products;
-          console.log('Found products in data.data.result.products:', products.length);
-        } else if (data.data && data.data.data && Array.isArray(data.data.data.products)) {
-          products = data.data.data.products;
-          console.log('Found products in data.data.data.products:', products.length);
-        } else if (data.data && Array.isArray(data.data.products)) {
-          products = data.data.products;
-          console.log('Found products in data.data.products:', products.length);
-        } else if (data.data && data.data.result && Array.isArray(data.data.result)) {
-          products = data.data.result;
-          console.log('Found products in data.data.result array:', products.length);
-        } else if (data.data && data.data.data && Array.isArray(data.data.data)) {
-          products = data.data.data;
-          console.log('Found products in data.data.data array:', products.length);
-        } else if (Array.isArray(data.products)) {
-          products = data.products;
-          console.log('Found products in data.products:', products.length);
-        } else {
-          console.warn('Could not find products array in AliExpress response. Trying to extract from available data...');
-          console.log('Available keys in data:', Object.keys(data));
-          
-          const findProducts = (obj, path = '') => {
-            if (Array.isArray(obj) && obj.length > 0 && typeof obj[0] === 'object') {
-              console.log(`Found potential products array at ${path}:`, obj.length, 'items');
-              return obj;
-            }
-            if (typeof obj === 'object' && obj !== null) {
-              for (const [key, value] of Object.entries(obj)) {
-                const result = findProducts(value, path ? `${path}.${key}` : key);
-                if (result) return result;
-              }
-            }
-            return null;
-          };
-          
-          const foundProducts = findProducts(data);
-          if (foundProducts) {
-            products = foundProducts;
-            console.log('Found products using recursive search:', products.length);
-          } else {
-            products = [];
-            console.log('No products found in AliExpress response');
-          }
-        }
-        //fake store api function here
-      } else if (platform === 'target') {
+      }  else if (platform === 'target') {
         console.log('Parsing Target data structure...');
 
         // Handle Target API response structure
@@ -196,8 +126,27 @@ const apiService = {
           console.log('Available keys in data:', Object.keys(data));
           products = []; //go back to empty array if no products found
         }
+      // 🆕 NEW: eBay (DummyJSON) data parsing section
+      } else if (platform === 'ebay') {
+        console.log('Parsing eBay data structure...');
+        
+        // Handle eBay API response structure (DummyJSON format)
+        if (Array.isArray(data)) {
+          products = data; // Here we look for products in the root array
+          console.log('Found products in root array:', products.length);
+        } else if (data.products && Array.isArray(data.products)) {
+          products = data.products; // Here we look for products nested under a "products" key
+          console.log('Found products in data.products:', products.length);
+        } else if (data.data && Array.isArray(data.data)) {
+          products = data.data; //Here we look for products nested under a "data" key
+          console.log('Found products in data.data:', products.length);
+        } else {
+          console.warn('Could not find products array in eBay response.');
+          console.log('Available keys in data:', Object.keys(data));
+          products = []; //go back to empty array if no products found
+        }  
       } else {
-        // Handle other platforms (Amazon, eBay, Shopify, Walmart)
+        // Handle other platforms (Amazon, eBay, Target, Alibaba)
         if (data.data && Array.isArray(data.data.products)) {
           products = data.data.products;
         } else if (Array.isArray(data.products)) {
@@ -280,8 +229,34 @@ const apiService = {
             category: firstProduct.category,
             description: firstProduct.description
           });
+
+             // 🆕 NEW: eBay field analysis section  
+        } else if (platform === 'ebay') {
+          const firstProduct = products[0];
+          console.log('eBay product field analysis:', {
+            possibleTitles: {
+              title: firstProduct.title,
+              name: firstProduct.name
+            },
+            possiblePrices: {
+              price: firstProduct.price
+            },
+            possibleImages: {
+              image: firstProduct.image
+            },
+            possibleIds: {
+              id: firstProduct.id
+            },
+            possibleRatings: {
+              rating: firstProduct.rating
+            },
+            category: firstProduct.category,
+            description: firstProduct.description
+          });
         }
-      }
+      }  
+        
+      
 
       products = products.map((product, index) => {
         let price = 0;
@@ -344,14 +319,21 @@ const apiService = {
             minPrice: itemData.minPrice,
             maxPrice: itemData.maxPrice
           });
-        } else if (platform === 'aliexpress') {
-          rawPrice = product.app_sale_price || product.price || product.sale_price || product.final_price;
+        
         } else if (platform === 'target') {
           rawPrice = product.price;
           console.log(`Target price extraction for product ${index}:`, {
             raw: rawPrice,
             productKeys: Object.keys(product)
           });
+
+        } else if (platform === 'ebay') {
+          rawPrice = product.price;
+          console.log(`eBay price extraction for product ${index}:`, {
+            raw: rawPrice,
+            productKeys: Object.keys(product)
+          });
+        
         } else {
           rawPrice = product.price?.value || product.price || product.product_price || product.final_price;
         }
@@ -408,9 +390,7 @@ const apiService = {
             sellerRating: sellerData.rating,
             companyRating: companyData.rating
           });
-        } else if (platform === 'aliexpress') {
-          const aliRating = product.evaluate_rate || product.rating || product.star_rating || 0;
-          rating = parseFloat(aliRating);
+        
         } else if (platform === 'target') {
           // Fake Store API has rating in nested structure
           const targetRating = product.rating || 0;
@@ -421,6 +401,17 @@ const apiService = {
             parsed: rating,
             ratingStructure: product.rating
           });
+        } else if (platform === 'ebay') {
+          // eBay has rating in nested structure
+          const ebayRating = product.rating || 0;
+          rating = parseFloat(ebayRating);
+          
+          console.log(`eBay rating extraction for product ${index}:`, {
+            raw: ebayRating,
+            parsed: rating,
+            ratingStructure: product.rating
+          });
+  
         } else {
           rating = parseFloat(
             product.rating || 
@@ -452,8 +443,7 @@ const apiService = {
             productTitle: itemData.productTitle,
             subject: itemData.subject
           });
-        } else if (platform === 'aliexpress') {
-          productName = product.product_title || product.title || product.name || 'Unknown Product';
+       
         } else if (platform === 'target') {
           productName = product.title || product.name || 'Unknown Product';
           
@@ -462,6 +452,14 @@ const apiService = {
             title: product.title,
             name: product.name
           });
+        } else if (platform === 'ebay') {
+          productName = product.title || product.name || 'Unknown Product';
+          
+          console.log(`eBay title extraction for product ${index}:`, {
+            final: productName,
+            title: product.title,
+            name: product.name
+          });  
         } else {
           productName = product.title || product.name || product.product_title || 'Unknown Product';
         }
@@ -495,15 +493,21 @@ const apiService = {
             images: itemData.images,
             pic: itemData.pic
           });
-        } else if (platform === 'aliexpress') {
-          productImage = product.image_url || product.main_image || product.image || product.thumbnail || productImage;
-        } else if (platform === 'target') {
+        }else if (platform === 'target') {
           productImage = product.image || productImage;
 
           console.log(`Target image extraction for product ${index}:`, {
             final: productImage,
             image: product.image
           });
+        }else if (platform === 'ebay') {
+          productImage = product.image || productImage;
+          
+          console.log(`eBay image extraction for product ${index}:`, {
+            final: productImage,
+            image: product.image
+          });
+
         } else {
           productImage = product.image || product.thumbnail || product.product_photo || product.main_image || productImage;
         }
@@ -527,8 +531,7 @@ const apiService = {
             productId: itemData.productId,
             offerId: itemData.offerId
           });
-        } else if (platform === 'aliexpress') {
-          productId = product.product_id || product.id || product.asin || `aliexpress-${index}-${Math.random().toString(36).slice(2)}`;
+      
         } else if (platform === 'target') {
           productId = product.id || `target-${index}-${Math.random().toString(36).slice(2)}`;
 
@@ -536,6 +539,14 @@ const apiService = {
             final: productId,
             id: product.id
           });
+         } else if (platform === 'ebay') {
+          productId = product.id || `ebay-${index}-${Math.random().toString(36).slice(2)}`;
+          
+          console.log(`eBay ID extraction for product ${index}:`, {
+            final: productId,
+            id: product.id
+          });
+
         } else {
           productId = product.asin || product.itemId || product.id || product.product_id || `${platform}-${index}-${Math.random().toString(36).slice(2)}`;
         }
@@ -565,6 +576,14 @@ const apiService = {
             url: product.url,
             id: product.id
           });
+        } else if (platform === 'ebay') {
+          productUrl = product.url || `https://dummyjson.com/products/${product.id}` || '#';
+          
+          console.log(`eBay URL extraction for product ${index}:`, {
+            final: productUrl,
+            url: product.url,
+            id: product.id
+          });  
         } else {
           productUrl = product.url || 
                       product.link || 
@@ -810,7 +829,6 @@ const apiService = {
     );
   };
 
-  // Add platform distribution info for debugging
   const platformDistribution = products.reduce((acc, product) => {
     acc[product.platform] = (acc[product.platform] || 0) + 1;
     return acc;
@@ -849,14 +867,6 @@ const apiService = {
           </div>
         )}
 
-        {/* Debug info - remove in production */}
-        {Object.keys(platformDistribution).length > 0 && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <div className="text-blue-700 text-sm">
-              <strong>Platform Distribution:</strong> {Object.entries(platformDistribution).map(([platform, count]) => `${platform}: ${count}`).join(', ')}
-            </div>
-          </div>
-        )}
 
         <TopMarginalBenefit products={topMarginalBenefitProducts} averageCostBenefit={averageCostBenefit} />
 
