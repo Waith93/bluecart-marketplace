@@ -4,11 +4,11 @@ from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer
-
 from app.models import User
-from app.schema import UserCreate, UserLogin, Token
+from app.schema import UserCreate, UserLogin, Token, UserProfile
 from app.database import get_db
 from app.config import settings
+from pydantic import BaseModel  
 
 router = APIRouter(tags=["auth"])
 
@@ -18,6 +18,12 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = "HS256"  
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
+
+
+class ResetPasswordRequest(BaseModel):
+    username: str
+    email: str
+    new_password: str
 
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
@@ -71,7 +77,7 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
     if not db_user or not verify_password(user.password, db_user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials.")
     
-    token = create_access_token(data={"sub": db_user.username})
+    token = create_access_token(data={"sub": db_user.email})  # ← Use EMAIL
     return {"access_token": token, "token_type": "bearer"}
 
 @router.post("/reset-password")
@@ -88,3 +94,8 @@ def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
     db.commit()
 
     return {"detail": "Password reset successful."}
+
+@router.get("/profile", response_model=UserProfile)
+def get_user_profile(current_user: User = Depends(get_current_user)):
+    return current_user
+

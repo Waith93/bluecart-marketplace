@@ -18,46 +18,186 @@ function SearchBarPage() {
   const API_BASE_URL = 'http://127.0.0.1:8000';
   const ITEMS_PER_PAGE = 9;
   
-  const sortOptions = ['Best Rating', 'High Price', 'Low Price', 'Best Cost-Benefit'];// add cost benefit option
+  const sortOptions = ['Best Rating', 'High Price', 'Low Price', 'Best Cost-Benefit'];// added cost benefit option
   const priceRanges = [
     { id: 'under100', label: 'Under $100' },
     { id: '100-200', label: '$100 - $200' },
     { id: '200-300', label: '$200 - $300' },
     { id: 'over300', label: 'Over $300' }
   ];
-  const platforms = [
-    { id: 'amazon', name: 'Amazon', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg' },
-    { id: 'walmart', name: 'Walmart', logo: 'https://upload.wikimedia.org/wikipedia/commons/c/ca/Walmart_logo.svg' },
-    { id: 'shopify', name: 'Shopify', logo: 'https://cdn.worldvectorlogo.com/logos/shopify.svg' },
-    { id: 'ebay', name: 'eBay', logo: 'https://upload.wikimedia.org/wikipedia/commons/1/1b/EBay_logo.svg' }
-  ];
+ const platforms = [
+  { 
+    id: 'amazon', 
+    name: 'Amazon', 
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg' 
+  },
+  { 
+    id: 'alibaba', 
+    name: 'AliBaba', 
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/0/0c/Alibaba_Group_logo.svg'
+  },
+  { 
+    id: 'shopify', 
+    name: 'Shopify', 
+    logo: 'https://cdn.worldvectorlogo.com/logos/shopify.svg' 
+  },
+  { 
+    id: 'ebay', 
+    name: 'eBay', 
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/1/1b/EBay_logo.svg' 
+  },
+  { 
+    id: 'target', 
+    name: 'Target', 
+    logo: 'https://fakestoreapi.com/icons/icon-512x512.png' 
+  }
+];
 
-  const apiService = {
-    fetchProducts: async (platform, query) => {
-      try {
-        const url = new URL(`${API_BASE_URL}/search`);
-        url.searchParams.append('query', encodeURIComponent(query));
-        url.searchParams.append('platform', platform);
 
-        const response = await fetch(url.toString(), {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
-        });
+const apiService = {
+  fetchProducts: async (platform, query) => {
+    try {
+      const url = new URL(`${API_BASE_URL}/search`);
+      url.searchParams.append('query', encodeURIComponent(query));
+      url.searchParams.append('platform', platform);
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error(`Server error for ${platform}:`, errorData);
-          throw new Error(`HTTP error! status: ${response.status}: ${errorData.detail || JSON.stringify(errorData)}`);
+      console.log(`Fetching from ${platform}:`, url.toString());
+
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
         }
+      });
 
-        const data = await response.json();
-        console.log(`API response for platform ${platform}:`, data);
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error(`Server error for ${platform}:`, errorData);
+        throw new Error(`HTTP error! status: ${response.status}: ${errorData.detail || JSON.stringify(errorData)}`);
+      }
 
-        let products = [];
+      const data = await response.json();
+      console.log(`API response for platform ${platform}:`, data);
+
+      let products = [];
+      
+      if (platform === 'alibaba') {
+        console.log('Parsing Alibaba data structure...');
+        console.log('Full response:', JSON.stringify(data, null, 2));
         
+        if (data.result && data.result.resultList && Array.isArray(data.result.resultList)) {
+          products = data.result.resultList;
+          console.log('Found products in data.result.resultList:', products.length);
+        } else if (data.resultList && Array.isArray(data.resultList)) {
+          products = data.resultList;
+          console.log('Found products in data.resultList:', products.length);
+        } else if (data.data && data.data.resultList && Array.isArray(data.data.resultList)) {
+          products = data.data.resultList;
+          console.log('Found products in data.data.resultList:', products.length);
+        } else if (data.products && Array.isArray(data.products)) {
+          products = data.products;
+          console.log('Found products in data.products:', products.length);
+        } else if (Array.isArray(data)) {
+          products = data;
+          console.log('Found products in root array:', products.length);
+        } else {
+          console.warn('Could not find resultList in Alibaba response.');
+          console.log('Available keys in data:', Object.keys(data));
+          if (data.result) {
+            console.log('Available keys in data.result:', Object.keys(data.result));
+          }
+          
+          // Try to find any array in the response
+          const findArrays = (obj, path = '') => {
+            if (Array.isArray(obj)) {
+              console.log(`Found array at ${path}:`, obj.length, 'items');
+              if (obj.length > 0) {
+                console.log('First item in array:', obj[0]);
+              }
+              return obj;
+            }
+            if (typeof obj === 'object' && obj !== null) {
+              for (const [key, value] of Object.entries(obj)) {
+                const result = findArrays(value, path ? `${path}.${key}` : key);
+                if (result && result.length > 0) return result;
+              }
+            }
+            return null;
+          };
+          
+          const foundArray = findArrays(data);
+          products = foundArray || [];
+        }
+      } else if (platform === 'aliexpress') {
+        console.log('Parsing AliExpress data structure...');
+        
+        if (data.data && data.data.result && Array.isArray(data.data.result.products)) {
+          products = data.data.result.products;
+          console.log('Found products in data.data.result.products:', products.length);
+        } else if (data.data && data.data.data && Array.isArray(data.data.data.products)) {
+          products = data.data.data.products;
+          console.log('Found products in data.data.data.products:', products.length);
+        } else if (data.data && Array.isArray(data.data.products)) {
+          products = data.data.products;
+          console.log('Found products in data.data.products:', products.length);
+        } else if (data.data && data.data.result && Array.isArray(data.data.result)) {
+          products = data.data.result;
+          console.log('Found products in data.data.result array:', products.length);
+        } else if (data.data && data.data.data && Array.isArray(data.data.data)) {
+          products = data.data.data;
+          console.log('Found products in data.data.data array:', products.length);
+        } else if (Array.isArray(data.products)) {
+          products = data.products;
+          console.log('Found products in data.products:', products.length);
+        } else {
+          console.warn('Could not find products array in AliExpress response. Trying to extract from available data...');
+          console.log('Available keys in data:', Object.keys(data));
+          
+          const findProducts = (obj, path = '') => {
+            if (Array.isArray(obj) && obj.length > 0 && typeof obj[0] === 'object') {
+              console.log(`Found potential products array at ${path}:`, obj.length, 'items');
+              return obj;
+            }
+            if (typeof obj === 'object' && obj !== null) {
+              for (const [key, value] of Object.entries(obj)) {
+                const result = findProducts(value, path ? `${path}.${key}` : key);
+                if (result) return result;
+              }
+            }
+            return null;
+          };
+          
+          const foundProducts = findProducts(data);
+          if (foundProducts) {
+            products = foundProducts;
+            console.log('Found products using recursive search:', products.length);
+          } else {
+            products = [];
+            console.log('No products found in AliExpress response');
+          }
+        }
+        //fake store api function here
+      } else if (platform === 'target') {
+        console.log('Parsing Target data structure...');
+
+        // Handle Target API response structure
+        if (Array.isArray(data)) {
+          products = data; // Here we look for products in the root array
+          console.log('Found products in root array:', products.length);
+        } else if (data.products && Array.isArray(data.products)) {
+          products = data.products; // Here we look for products nested under a "products" key
+          console.log('Found products in data.products:', products.length);
+        } else if (data.data && Array.isArray(data.data)) {
+          products = data.data; //Here we look for products nested under a "data" key
+          console.log('Found products in data.data:', products.length);
+        } else {
+          console.warn('Could not find products array in Fake Store API response.');
+          console.log('Available keys in data:', Object.keys(data));
+          products = []; //go back to empty array if no products found
+        }
+      } else {
+        // Handle other platforms (Amazon, eBay, Shopify, Walmart)
         if (data.data && Array.isArray(data.data.products)) {
           products = data.data.products;
         } else if (Array.isArray(data.products)) {
@@ -66,76 +206,413 @@ function SearchBarPage() {
           products = data.search_results;
         } else if (data.ItemArray && Array.isArray(data.ItemArray.Item)) {
           products = data.ItemArray.Item;
+        } else if (data.productSummaries && Array.isArray(data.productSummaries)) {
+          products = data.productSummaries;
         } else {
           console.warn(`Unexpected API response structure for ${platform}:`, data);
           products = [];
         }
+      }
 
-        products = products.map(product => {
-          let price = 0;
-          const rawPrice = product.price?.value || product.price || product.product_price || product.final_price;
-          if (rawPrice !== undefined && rawPrice !== null) {
-            const parsedPrice = parseFloat(rawPrice.toString().replace(/[^0-9.]/g, ''));
-            price = isNaN(parsedPrice) ? 0 : parsedPrice;
+      console.log(`Raw products found for ${platform}:`, products.length);
+      
+      if (products.length > 0) {
+        console.log(`First product structure for ${platform}:`, products[0]);
+        console.log(`All keys in first product:`, Object.keys(products[0]));
+        
+        if (platform === 'alibaba') {
+          const firstProduct = products[0];
+          console.log('Alibaba product field analysis:', {
+            possibleTitles: {
+              title: firstProduct.title,
+              name: firstProduct.name,
+              productTitle: firstProduct.productTitle,
+              productName: firstProduct.productName,
+              subject: firstProduct.subject
+            },
+            possiblePrices: {
+              price: firstProduct.price,
+              minPrice: firstProduct.minPrice,
+              maxPrice: firstProduct.maxPrice,
+              unitPrice: firstProduct.unitPrice,
+              salePrice: firstProduct.salePrice,
+              priceRange: firstProduct.priceRange
+            },
+            possibleImages: {
+              image: firstProduct.image,
+              imageUrl: firstProduct.imageUrl,
+              mainImage: firstProduct.mainImage,
+              pic: firstProduct.pic,
+              picUrl: firstProduct.picUrl
+            },
+            possibleIds: {
+              itemId: firstProduct.itemId,
+              id: firstProduct.id,
+              productId: firstProduct.productId,
+              offerId: firstProduct.offerId
+            },
+            possibleRatings: {
+              rating: firstProduct.rating,
+              starRating: firstProduct.starRating,
+              averageRating: firstProduct.averageRating,
+              star: firstProduct.star
+            }
+          });
+        } else if (platform === 'target') {
+          const firstProduct = products[0];
+          console.log('Target product field analysis:', {
+            possibleTitles: {
+              title: firstProduct.title,
+              name: firstProduct.name
+            },
+            possiblePrices: {
+              price: firstProduct.price
+            },
+            possibleImages: {
+              image: firstProduct.image
+            },
+            possibleIds: {
+              id: firstProduct.id
+            },
+            possibleRatings: {
+              rating: firstProduct.rating
+            },
+            category: firstProduct.category,
+            description: firstProduct.description
+          });
+        }
+      }
+
+      products = products.map((product, index) => {
+        let price = 0;
+        let rawPrice;
+        
+        if (platform === 'alibaba') {
+          const itemData = product.item || {};
+          const sellerData = product.seller || {};
+          const companyData = product.company || {};
+          
+          // FIXED: Look for price in the SKU structure
+          let priceFromSku = null;
+          if (itemData.sku && itemData.sku.def && itemData.sku.def.priceModule) {
+            const priceModule = itemData.sku.def.priceModule;
+            
+            // Get the first price from priceList (for single quantity orders)
+            if (priceModule.priceList && priceModule.priceList.length > 0) {
+              const firstPriceItem = priceModule.priceList[0];
+              priceFromSku = firstPriceItem.price;
+              console.log(`Found SKU price for product ${index}:`, priceFromSku);
+            }
+            
+            if (!priceFromSku && priceModule.price) {
+              const priceRange = priceModule.price.toString();
+              const prices = priceRange.split('-');
+              if (prices.length > 1) {
+                priceFromSku = prices[1]; 
+              } else {
+                priceFromSku = priceRange;
+              }
+              console.log(`Found price range for product ${index}:`, priceRange, '-> using:', priceFromSku);
+            }
           }
+          
+          rawPrice = priceFromSku ||
+                    itemData.price || 
+                    itemData.minPrice || 
+                    itemData.maxPrice || 
+                    itemData.unitPrice ||
+                    itemData.salePrice ||
+                    itemData.originalPrice ||
+                    sellerData.price ||
+                    sellerData.minPrice ||
+                    sellerData.maxPrice ||
+                    companyData.price ||
+                    companyData.minPrice ||
+                    companyData.maxPrice ||
+                    (itemData.priceInfo && itemData.priceInfo.price);
+          
+          // Log price extraction for debugging
+          console.log(`Alibaba price extraction for product ${index}:`, {
+            raw: rawPrice,
+            priceFromSku: priceFromSku,
+            skuStructure: itemData.sku,
+            productKeys: Object.keys(product),
+            itemKeys: Object.keys(itemData),
+            sellerKeys: Object.keys(sellerData),
+            companyKeys: Object.keys(companyData),
+            priceField: itemData.price,
+            minPrice: itemData.minPrice,
+            maxPrice: itemData.maxPrice
+          });
+        } else if (platform === 'aliexpress') {
+          rawPrice = product.app_sale_price || product.price || product.sale_price || product.final_price;
+        } else if (platform === 'target') {
+          rawPrice = product.price;
+          console.log(`Target price extraction for product ${index}:`, {
+            raw: rawPrice,
+            productKeys: Object.keys(product)
+          });
+        } else {
+          rawPrice = product.price?.value || product.price || product.product_price || product.final_price;
+        }
+        
+        if (rawPrice !== undefined && rawPrice !== null) {
+          const parsedPrice = parseFloat(rawPrice.toString().replace(/[^0-9.]/g, ''));
+          price = isNaN(parsedPrice) ? 0 : parsedPrice;
+        }
 
-          const rating = parseFloat(
+        let rating = 0;
+        if (platform === 'alibaba') {
+          // Alibaba data is nested - check item, seller, and company objects
+          const itemData = product.item || {};
+          const sellerData = product.seller || {};
+          const companyData = product.company || {};
+          
+          // FIXED: Also check seller evaluations for rating
+          let ratingFromSeller = 0;
+          if (sellerData.storeEvaluates && Array.isArray(sellerData.storeEvaluates)) {
+           const scores = sellerData.storeEvaluates.map(item => parseFloat(item.score)).filter(score => !isNaN(score));            if (scores.length > 0) {
+              ratingFromSeller = scores.reduce((sum, score) => sum + score, 0) / scores.length;
+              console.log(`Found seller rating for product ${index}:`, ratingFromSeller, 'from scores:', scores);
+            }
+          }
+          
+          const alibabaRating = itemData.rating || 
+                               itemData.starRating || 
+                               itemData.averageRating ||
+                               itemData.star ||
+                               itemData.reviewRating ||
+                               itemData.score ||
+                               ratingFromSeller ||
+                               sellerData.rating ||
+                               sellerData.averageRating ||
+                               sellerData.score ||
+                               companyData.rating ||
+                               companyData.averageRating ||
+                               (itemData.ratingInfo && itemData.ratingInfo.rating) ||
+                               0;
+          rating = parseFloat(alibabaRating);
+          
+          // Log rating extraction for debugging
+          console.log(`Alibaba rating extraction for product ${index}:`, {
+            raw: alibabaRating,
+            parsed: rating,
+            ratingFromSeller: ratingFromSeller,
+            sellerEvaluates: sellerData.storeEvaluates,
+            itemData: itemData,
+            sellerData: sellerData,
+            companyData: companyData,
+            ratingField: itemData.rating,
+            starRating: itemData.starRating,
+            averageRating: itemData.averageRating,
+            sellerRating: sellerData.rating,
+            companyRating: companyData.rating
+          });
+        } else if (platform === 'aliexpress') {
+          const aliRating = product.evaluate_rate || product.rating || product.star_rating || 0;
+          rating = parseFloat(aliRating);
+        } else if (platform === 'target') {
+          // Fake Store API has rating in nested structure
+          const targetRating = product.rating || 0;
+          rating = parseFloat(targetRating);
+          
+          console.log(`Target rating extraction for product ${index}:`, {
+            raw: targetRating,
+            parsed: rating,
+            ratingStructure: product.rating
+          });
+        } else {
+          rating = parseFloat(
             product.rating || 
             product.ratings?.average || 
             product.product_star_rating ||
             product.review_rating ||
             0
           );
+        }
 
-          const costBenefit = price > 0 ? rating / price : 0; //cost benefitfunction
+        const costBenefit = price > 0 ? rating / price : 0;
 
-          return {
-            id: product.asin || product.itemId || product.id || product.product_id || `product-${Math.random().toString(36).slice(2)}`,
-            name: product.title || product.name || product.product_title || 'Unknown Product',
-            price: price,
-            rating: rating,
-            costBenefit: costBenefit,
-            platform,
-            image: product.image || 
-                   product.thumbnail || 
-                   product.product_photo || 
-                   product.main_image ||
-                   'https://via.placeholder.com/300x200?text=Product+Image',
-            url: product.url || 
-                 product.link || 
-                 product.product_url ||
-                 product.product_page_url ||
-                 '#'
-          };
-        });
+        let productName = 'Unknown Product';
+        if (platform === 'alibaba') {
+          const itemData = product.item || {};
+          productName = itemData.title || 
+                       itemData.name || 
+                       itemData.productTitle ||
+                       itemData.productName ||
+                       itemData.subject ||
+                       itemData.displayName ||
+                       'Unknown Product';
+          
+          console.log(`Alibaba title extraction for product ${index}:`, {
+            final: productName,
+            itemData: itemData,
+            title: itemData.title,
+            name: itemData.name,
+            productTitle: itemData.productTitle,
+            subject: itemData.subject
+          });
+        } else if (platform === 'aliexpress') {
+          productName = product.product_title || product.title || product.name || 'Unknown Product';
+        } else if (platform === 'target') {
+          productName = product.title || product.name || 'Unknown Product';
+          
+          console.log(`Target title extraction for product ${index}:`, {
+            final: productName,
+            title: product.title,
+            name: product.name
+          });
+        } else {
+          productName = product.title || product.name || product.product_title || 'Unknown Product';
+        }
+
+        let productImage = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzlDQTNBRiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
+        if (platform === 'alibaba') {
+          const itemData = product.item || {};
+          let imageUrl = itemData.image || 
+                        itemData.imageUrl || 
+                        itemData.mainImage ||
+                        itemData.thumbnail ||
+                        itemData.pic ||
+                        itemData.picUrl ||
+                        itemData.imgUrl ||
+                        (itemData.images && itemData.images[0]) ||
+                        (itemData.imageInfo && itemData.imageInfo.url) ||
+                        productImage;
+          
+          if (imageUrl && imageUrl.startsWith('//')) {
+            imageUrl = 'https:' + imageUrl;
+          }
+          
+          productImage = imageUrl;
+          
+          console.log(`Alibaba image extraction for product ${index}:`, {
+            final: productImage,
+            itemData: itemData,
+            image: itemData.image,
+            imageUrl: itemData.imageUrl,
+            mainImage: itemData.mainImage,
+            images: itemData.images,
+            pic: itemData.pic
+          });
+        } else if (platform === 'aliexpress') {
+          productImage = product.image_url || product.main_image || product.image || product.thumbnail || productImage;
+        } else if (platform === 'target') {
+          productImage = product.image || productImage;
+
+          console.log(`Target image extraction for product ${index}:`, {
+            final: productImage,
+            image: product.image
+          });
+        } else {
+          productImage = product.image || product.thumbnail || product.product_photo || product.main_image || productImage;
+        }
+
+        let productId;
+        if (platform === 'alibaba') {
+          const itemData = product.item || {};
+          productId = itemData.itemId || 
+                     itemData.id || 
+                     itemData.productId ||
+                     itemData.offerId ||
+                     itemData.pid ||
+                     itemData.itemCode ||
+                     `alibaba-${index}-${Math.random().toString(36).slice(2)}`;
+          
+          console.log(`Alibaba ID extraction for product ${index}:`, {
+            final: productId,
+            itemData: itemData,
+            itemId: itemData.itemId,
+            id: itemData.id,
+            productId: itemData.productId,
+            offerId: itemData.offerId
+          });
+        } else if (platform === 'aliexpress') {
+          productId = product.product_id || product.id || product.asin || `aliexpress-${index}-${Math.random().toString(36).slice(2)}`;
+        } else if (platform === 'target') {
+          productId = product.id || `target-${index}-${Math.random().toString(36).slice(2)}`;
+
+          console.log(`Target ID extraction for product ${index}:`, {
+            final: productId,
+            id: product.id
+          });
+        } else {
+          productId = product.asin || product.itemId || product.id || product.product_id || `${platform}-${index}-${Math.random().toString(36).slice(2)}`;
+        }
+
+        let productUrl = '#';
+        if (platform === 'alibaba') {
+          const itemData = product.item || {};
+          let itemUrl = itemData.itemUrl || itemData.url || itemData.link || itemData.detailUrl;
+          
+          if (itemUrl && itemUrl.startsWith('//')) {
+            itemUrl = 'https:' + itemUrl;
+          }
+          
+          productUrl = itemUrl || '#';
+          
+          console.log(`Alibaba URL extraction for product ${index}:`, {
+            final: productUrl,
+            itemUrl: itemData.itemUrl,
+            url: itemData.url,
+            link: itemData.link
+          });
+        } else if (platform === 'target') {
+          productUrl = product.url || `https://fakestoreapi.com/products/${product.id}` || '#';
+          
+          console.log(`Fake Store API URL extraction for product ${index}:`, {
+            final: productUrl,
+            url: product.url,
+            id: product.id
+          });
+        } else {
+          productUrl = product.url || 
+                      product.link || 
+                      product.product_url ||
+                      product.product_page_url ||
+                      product.detailUrl ||
+                      '#';
+        }
 
         return {
-          products,
-          totalCount: data.data?.total_products || data.total || data.total_results || data.totalCount || products.length,
-          hasMore: data.hasMore || products.length >= 20
+          id: productId,
+          name: productName,
+          price: price,
+          rating: rating,
+          costBenefit: costBenefit,
+          platform,
+          image: productImage,
+          url: productUrl
         };
-      } catch (error) {
-        console.error(`${platform} fetch error:`, error);
-        return { 
-          products: [], 
-          error: error.message,
-          totalCount: 0,
-          hasMore: false
-        };
-      }
+      });
+
+      console.log(`Transformed products for ${platform}:`, products.length);
+      
+      return {
+        products,
+        totalCount: data.total_products || data.total || data.total_results || data.totalCount || products.length,
+        hasMore: data.hasMore || products.length >= 20
+      };
+    } catch (error) {
+      console.error(`${platform} fetch error:`, error);
+      return { 
+        products: [], 
+        error: error.message,
+        totalCount: 0,
+        hasMore: false
+      };
     }
-  };
+  }
+};
 
   const fetchProducts = async (query = search.query, selectedPlatforms = filters.platforms) => {
     setSearch(prev => ({ ...prev, loading: true, error: null }));
     
     try {
-      // If no platforms are selected, use all platforms
       const platformsToSearch = selectedPlatforms.length > 0 ? selectedPlatforms : platforms.map(p => p.id);
       
       console.log('Searching platforms:', platformsToSearch);
       
-      // Fetch from each platform individually
       const results = await Promise.allSettled(
         platformsToSearch.map(platform => apiService.fetchProducts(platform, query))
       );
@@ -149,11 +626,9 @@ function SearchBarPage() {
           if (result.value.error) {
             errors.push(`${platformName}: ${result.value.error}`);
           } else {
-            // Ensure each product has the correct platform assigned
             const productsWithPlatform = result.value.products.map(product => ({
               ...product,
               platform: platformName,
-              // Add a unique ID that includes platform to avoid conflicts
               id: `${platformName}-${product.id}`
             }));
             allProducts.push(...productsWithPlatform);
@@ -178,7 +653,6 @@ function SearchBarPage() {
         if (errors.length === platformsToSearch.length) {
           setSearch(prev => ({ ...prev, error: `Failed to fetch from all platforms: ${errors.join(', ')}` }));
         } else {
-          // Show partial success message
           const successfulPlatforms = platformsToSearch.filter((_, i) => results[i].status === 'fulfilled' && !results[i].value.error);
           console.log(`Successfully fetched from: ${successfulPlatforms.join(', ')}`);
         }
@@ -223,7 +697,7 @@ function SearchBarPage() {
   };
 
   const handleViewDetails = (product) => {
-  navigate(`/products/${product.id}`); // Changed from /product/ to /products/
+  navigate(`/products/${product.id}`); 
   console.log('Navigating to product detail page for:', product.id);
 }
 
@@ -260,7 +734,7 @@ function SearchBarPage() {
     }
   });
 
-  const topMarginalBenefitProducts = [...filteredProducts] //add marginalbenefitfunction
+  const topMarginalBenefitProducts = [...filteredProducts] 
     .sort((a, b) => (b.costBenefit - averageCostBenefit) - (a.costBenefit - averageCostBenefit))
     .slice(0, 3);
 

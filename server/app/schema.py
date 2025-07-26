@@ -9,8 +9,11 @@ class UserBase(BaseModel):
     username: str
     email: EmailStr
 
-class UserCreate(UserBase):
+class UserCreate(BaseModel):
+    username: str
+    email: EmailStr
     password: str
+
 
 class UserOut(UserBase):
     id: int
@@ -131,3 +134,17 @@ class FavoriteProduct(FavoriteProductOut):
 
     class Config:
         orm_mode = True
+from pydantic import BaseModel
+
+class ResetPasswordRequest(BaseModel):
+    username: str
+    email: str
+    new_password: str
+
+class UserProfile(BaseModel):
+    username: str
+    email: str
+    
+
+    class Config:
+        orm_mode = True  #

@@ -12,7 +12,7 @@ class User(Base):
     email = Column(String(100), unique=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
 
-    search_history = relationship("SearchHistory", back_populates="user")
+    search_history = relationship("SearchHistory", back_populates="user",cascade="all, delete-orphan")
     favorites = relationship("FavoriteProduct", back_populates="user")
 
 
@@ -23,6 +23,8 @@ class SearchHistory(Base):
     query_text = Column(String) 
     platform = Column(String) 
     searched_at = Column(DateTime, default=datetime.utcnow)
+    
+    user_id = Column(Integer, ForeignKey('users.id'))  # Added this line to link SearchHistory to User
 
     user = relationship("User", back_populates="search_history")
     products = relationship("Product", back_populates="search")
