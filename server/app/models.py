@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Text, ForeignKey, DateTime, Numeric, JSON
+from sqlalchemy import Column, Integer, String, Float, Text, ForeignKey, DateTime, Numeric, JSON, func
 from sqlalchemy.orm import relationship, declarative_base
 from datetime import datetime
 
@@ -20,12 +20,12 @@ class SearchHistory(Base):
     __tablename__ = "search_history"
     
     id = Column(Integer, primary_key=True, index=True)
-    query_text = Column(String) 
-    platform = Column(String) 
-    searched_at = Column(DateTime, default=datetime.utcnow)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    query = Column(String, nullable=False)
+    platforms = Column(JSON, nullable=False)  
+    total_results = Column(Integer, default=0)
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
     
-    user_id = Column(Integer, ForeignKey('users.id'))  # Added this line to link SearchHistory to User
-
     user = relationship("User", back_populates="search_history")
     products = relationship("Product", back_populates="search")
 

@@ -38,15 +38,20 @@ class ResetPasswordRequest(BaseModel):
 # SEARCH HISTORY SCHEMAS
 
 class SearchHistoryBase(BaseModel):
-    query_text: str
+    query: str
 
-class SearchHistoryCreate(SearchHistoryBase):
-    user_id: int
+class SearchHistoryCreate(BaseModel):
+    query: str
+    platforms: List[str]  # List of platforms
+    total_results: int    # Number of total search results
 
-class SearchHistoryOut(SearchHistoryBase):
+class SearchHistoryOut(BaseModel):
     id: int
-    searched_at: datetime
     user_id: int
+    query: str
+    platforms: List[str]
+    total_results: int
+    timestamp: datetime
 
     class Config:
         orm_mode = True
