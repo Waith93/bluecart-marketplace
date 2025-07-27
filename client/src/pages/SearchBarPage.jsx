@@ -15,6 +15,50 @@ function SearchBarPage() {
   const [products, setProducts] = useState([]);
   const navigate = useNavigate();
 
+  const saveToHistory = async (query, platforms, totalResults) => {
+  console.log("=== ATTEMPTING TO SAVE SEARCH HISTORY ===");
+  console.log("Query:", query);
+  console.log("Platforms:", platforms);
+  console.log("Total Results:", totalResults);
+  
+  const token = localStorage.getItem("access_token");
+  console.log("Token:", token ? "Present" : "Missing");
+  
+  if (!token) {
+    console.log("No token found - user not logged in, skipping history save");
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/search-history/`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        query: query,
+        platforms: platforms,
+        total_results: totalResults
+      })
+    });
+
+    console.log("Save response status:", response.status);
+    console.log("Save response ok:", response.ok);
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log("Search saved successfully:", data);
+    } else {
+      const errorText = await response.text();
+      console.error("Failed to save search:", errorText);
+    }
+  } catch (error) {
+    console.error("Error saving search:", error);
+  }
+  console.log("=== SAVE ATTEMPT COMPLETE ===");
+};
+
   const API_BASE_URL = 'http://127.0.0.1:8000';
   const ITEMS_PER_PAGE = 9;
   
@@ -126,11 +170,11 @@ const apiService = {
           console.log('Available keys in data:', Object.keys(data));
           products = []; //go back to empty array if no products found
         }
-      // 🆕 NEW: eBay (DummyJSON) data parsing section
+      
       } else if (platform === 'ebay') {
         console.log('Parsing eBay data structure...');
         
-        // Handle eBay API response structure (DummyJSON format)
+        
         if (Array.isArray(data)) {
           products = data; // Here we look for products in the root array
           console.log('Found products in root array:', products.length);
@@ -230,7 +274,7 @@ const apiService = {
             description: firstProduct.description
           });
 
-             // 🆕 NEW: eBay field analysis section  
+             //   eBay field analysis section  
         } else if (platform === 'ebay') {
           const firstProduct = products[0];
           console.log('eBay product field analysis:', {
@@ -345,7 +389,7 @@ const apiService = {
 
         let rating = 0;
         if (platform === 'alibaba') {
-          // Alibaba data is nested - check item, seller, and company objects
+          
           const itemData = product.item || {};
           const sellerData = product.seller || {};
           const companyData = product.company || {};
@@ -666,6 +710,13 @@ const apiService = {
       }, {}));
 
       setProducts(allProducts);
+      // SAVE TO HISTORY 
+if (allProducts.length > 0) {
+  const platformsUsed = platformsToSearch.filter((_, i) => 
+    results[i].status === 'fulfilled' && !results[i].value.error
+  );
+  await saveToHistory(query, platformsUsed, allProducts.length);
+}
       
       if (errors.length > 0) {
         console.warn('Some platforms failed:', errors);
