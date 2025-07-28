@@ -109,8 +109,8 @@ function HistoryPage() {
   // Not logged in view
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-gray-50 px-4 py-6">
-        <div className="max-w-5xl mx-auto bg-white rounded-lg shadow p-6">
+<div className="min-h-screen px-4 py-6" style={{backgroundColor: '#E5F3FD'}}>
+          <div className="max-w-5xl mx-auto bg-white rounded-lg shadow p-6">
           <div className="text-center py-12">
             <Lock className="mx-auto mb-4 text-gray-400" size={48} />
             <h2 className="text-xl font-semibold text-gray-700 mb-2">
@@ -133,8 +133,8 @@ function HistoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-6">
-      <div className="max-w-5xl mx-auto bg-white rounded-lg shadow p-6">
+<div className="min-h-screen px-4 py-6" style={{backgroundColor: '#E5F3FD'}}>
+<div className="max-w-5xl mx-auto bg-white rounded-lg shadow p-6">
         <h1 className="text-2xl font-semibold mb-4">Your Search History</h1>
 
         {error && (
