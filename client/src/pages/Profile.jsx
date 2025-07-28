@@ -44,6 +44,7 @@ const Content = ({ activeTab, userData, setUserData }) => {
   const [formData, setFormData] = useState({
     name: userData?.name || "",
     email: userData?.email || "",
+    username: userData?.username || "",
   });
   const [formErrors, setFormErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
@@ -53,6 +54,7 @@ const Content = ({ activeTab, userData, setUserData }) => {
   const validate = () => {
     const errors = {};
     if (!formData.name.trim()) errors.name = "Name is required.";
+    if (!formData.username.trim()) errors.username = "Username is required.";
     if (!formData.email.trim()) errors.email = "Email is required.";
     return errors;
   };
@@ -70,11 +72,14 @@ const Content = ({ activeTab, userData, setUserData }) => {
       return;
     }
 
+    const token = localStorage.getItem("access_token");
+
     try {
-      const response = await fetch("https://example.com/api/profile", {
-        method: "POST",
+      const response = await fetch("http://localhost:8000/auth/profile", {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(formData),
       });
@@ -140,11 +145,7 @@ const Content = ({ activeTab, userData, setUserData }) => {
   return (
     <div className="w-full md:w-3/4 p-4">
       <h2 className="text-xl font-bold mb-4">{activeTab}</h2>
-      {activeTab === "Favorites" || activeTab === "Recent searches" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <p>{activeTab} content will go here.</p>
-        </div>
-      ) : activeTab === "Edit profile" ? (
+      {activeTab === "Edit profile" && (
         <div className="bg-white p-6 rounded shadow max-w-lg">
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
@@ -154,10 +155,26 @@ const Content = ({ activeTab, userData, setUserData }) => {
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                className={`w-full border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 ${formErrors.name ? "border-red-500" : "border-gray-300"}`}
+                className={`w-full border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                  formErrors.name ? "border-red-500" : "border-gray-300"
+                }`}
                 placeholder="John Doe"
               />
               {formErrors.name && <p className="text-red-500 text-sm mt-1">{formErrors.name}</p>}
+            </div>
+            <div>
+              <label className="block text-gray-700 font-medium mb-1">Username</label>
+              <input
+                type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                className={`w-full border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                  formErrors.username ? "border-red-500" : "border-gray-300"
+                }`}
+                placeholder="John Doe"
+              />
+              {formErrors.username && <p className="text-red-500 text-sm mt-1">{formErrors.username}</p>}
             </div>
             <div>
               <label className="block text-gray-700 font-medium mb-1">Email</label>
@@ -166,7 +183,9 @@ const Content = ({ activeTab, userData, setUserData }) => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className={`w-full border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 ${formErrors.email ? "border-red-500" : "border-gray-300"}`}
+                className={`w-full border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                  formErrors.email ? "border-red-500" : "border-gray-300"
+                }`}
                 placeholder="johndoe@example.com"
               />
               {formErrors.email && <p className="text-red-500 text-sm mt-1">{formErrors.email}</p>}
@@ -180,7 +199,13 @@ const Content = ({ activeTab, userData, setUserData }) => {
             {successMessage && <p className="text-green-600 mt-2">{successMessage}</p>}
           </form>
         </div>
-      ) : null}
+      )}
+
+      {(activeTab === "Favorites" || activeTab === "Recent searches") && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <p>{activeTab} content will go here.</p>
+        </div>
+      )}
     </div>
   );
 };
