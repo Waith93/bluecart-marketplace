@@ -68,15 +68,15 @@ bluecart-marketplace/
 
 git clone https://github.com/your-username/bluecart-marketplace.git
 cd bluecart-marketplace
-Backend Setup
 
+#### Backend Setup
 cd server
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload
-Frontend Setup
 
+#### Frontend Setup
 cd ../client
 npm install
 npm run dev
@@ -84,19 +84,18 @@ npm run dev
 ---
 
 
-🧪 Running Tests
+### 🧪 Running Tests
 Frontend (Jest)
-
 cd client
 npm test
-Backend (Pytest)
 
+Backend (Pytest)
 cd server
 pytest
 
 ---
 
-🧠 Lessons Learned
+### 🧠 Lessons Learned
 Effective use of Redux for managing search & filter state
 
 FastAPI + Pydantic made data validation seamless
@@ -105,7 +104,7 @@ Challenges in handling cross-origin APIs and scraping
 
 Importance of modular, reusable components and API routes
 
-📌 Future Improvements
+### 📌 Future Improvements
 Product alerts / notifications
 
 Shopping cart and purchase simulation
@@ -114,5 +113,5 @@ Admin dashboard for vendor analytics
 
 ---
 
-📄 License
+### 📄 License
 This project is licensed under the MIT License.
