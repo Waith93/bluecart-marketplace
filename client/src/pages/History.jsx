@@ -43,7 +43,7 @@ function HistoryPage() {
 
       const data = await res.json();
       console.log("Fetched data:", data);
-      setHistory(data.reverse()); // Show newest first
+      setHistory(data); // Show newest first
     } catch (err) {
       console.error("History fetch error:", err);
       setError(err.message || "Something went wrong");
