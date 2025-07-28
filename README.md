@@ -1,12 +1,114 @@
-# React + Vite
+🛒 BlueCart Marketplace
+BlueCart Marketplace is a full-stack web application that allows users to search, compare, and analyze product prices across multiple e-commerce platforms (Amazon, eBay, Alibaba, etc.). The app is built with React + Redux Toolkit on the frontend and FastAPI on the backend, with a PostgreSQL database.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+🚀 Features
+🔍 Product Search across multiple marketplaces
 
-Currently, two official plugins are available:
+⚖️ Price Comparison with dynamic cost-benefit and margin analysis
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+🗂 Filtering and Sorting based on price, vendor, rating, and more
 
-## Expanding the ESLint configuration
+💾 User Authentication (Signup, Login, Logout)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+📝 Search History for logged-in users
+
+⭐ Review System for products
+
+🌐 Live crawling & API integration (Amazon, alibaba, etc.)
+
+![Homepage Screenshot](./assets/homepage.png)
+
+
+
+🧱 Tech Stack
+Frontend
+React
+
+Redux Toolkit
+
+React Router
+
+Tailwind CSS
+
+Jest (for testing)
+
+Backend
+FastAPI
+
+PostgreSQL
+
+SQLAlchemy
+
+Pytest
+
+Pydantic
+
+
+🗄️ Project Structure
+
+bluecart-marketplace/
+│
+├── client/        # React frontend
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   └── App.jsx
+│   └── tailwind.config.js
+│
+├── server/                     # FastAPI backend
+│   ├── app/
+│   │   ├── models.py
+│   │   ├── routes/
+│   │   ├── schema.py
+│   │   └── main.py
+│   ├── tests/
+│   └── seed.py
+⚙️ Installation & Setup
+Clone the repo
+
+
+git clone https://github.com/your-username/bluecart-marketplace.git
+cd bluecart-marketplace
+Backend Setup
+
+cd server
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+Frontend Setup
+
+cd ../book-tracker-client
+npm install
+npm run dev
+🧪 Running Tests
+Frontend (Jest)
+
+cd book-tracker-client
+npm test
+Backend (Pytest)
+
+
+🧠 Lessons Learned
+Effective use of Redux for managing search & filter state
+
+FastAPI + Pydantic made data validation seamless
+
+Challenges in handling cross-origin APIs and scraping
+
+Importance of modular, reusable components and API routes
+
+
+
+📌 Future Improvements
+
+Product alerts / notifications
+
+Shopping cart and purchase simulation
+
+Admin dashboard for vendor analytics
+
+
+
+📄 License
+This project is licensed under the MIT License.
