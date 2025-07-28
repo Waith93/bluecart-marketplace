@@ -14,7 +14,7 @@
 - ⭐ Review system for products  
 - 🌐 Live crawling & API integration (Amazon, Alibaba, etc.)
 
-![Homepage Screenshot](./client/assets/homepage.png)
+![Homepage Screenshot](./client/assets/homepage.PNG)
 
 ---
 
@@ -61,37 +61,45 @@ bluecart-marketplace/
 ```
 ---
 
-## ⚙️ Installation & Setup
+### 🛠️ Installation
 
-### Clone the repo
-
-
-git clone https://github.com/your-username/bluecart-marketplace.git
+#### Clone the repository
+```bash
+git clone https://github.com/your-username/bluecart-marketplace.git 
 cd bluecart-marketplace
+```
 
 #### Backend Setup
+```bash
 cd server
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload
+```
 
 #### Frontend Setup
+```bash
 cd ../client
 npm install
 npm run dev
+```
 
 ---
 
-
 ### 🧪 Running Tests
-Frontend (Jest)
+
+**Frontend (Jest)**  
+```bash
 cd client
 npm test
+```
 
-Backend (Pytest)
+**Backend (Pytest)**  
+```bash
 cd server
 pytest
+```
 
 ---
 
