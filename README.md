@@ -38,10 +38,27 @@
 
 ---
 
-<pre> ## 🗄️ Project Structure ``` bluecart-marketplace/ ├── assets/ # Screenshots & static images ├── client/ # React frontend │ ├── src/ │ │ ├── components/ │ │ ├── pages/ │ │ └── App.jsx │ └── tailwind.config.js │ ├── server/ # FastAPI backend │ ├── app/ │ │ ├── models.py │ │ ├── routes/ │ │ ├── schema.py │ │ └── main.py │ ├── tests/ │ └── seed.py ``` </pre>
+## 🗄️ Project Structure
 
+```
+bluecart-marketplace/
 
-
+├── client/                    # React frontend
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   └── App.jsx
+│   └── tailwind.config.js
+│
+├── server/                    # FastAPI backend
+│   ├── app/
+│   │   ├── models.py
+│   │   ├── routes/
+│   │   ├── schema.py
+│   │   └── main.py
+│   ├── tests/
+│   └── seed.py
+```
 ---
 
 ## ⚙️ Installation & Setup
