@@ -14,7 +14,7 @@ router = APIRouter(tags=["Product Details"])
 @router.get("/{product_id}", response_model=Dict[str, Any])
 def get_product_detail(
     product_id: str,
-    platform: str = Query(..., enum=["amazon", "ebay", "shopify", "walmart", "aliexpress"]),
+    platform: str = Query(..., enum=["amazon", "ebay", "target", "alibaba"]),
     db: Session = Depends(get_db)
 ):
     try:
@@ -36,7 +36,7 @@ def get_product_detail(
             }
             params = {"item_id": product_id}
 
-        elif platform == "shopify":
+        elif platform == "target":
             url = f"{os.getenv('RAPIDAPI_SHOPIFY_BASE_URL')}/product"
             headers = {
                 "X-RapidAPI-Key": os.getenv("RAPIDAPI_SHOPIFY_KEY"),
@@ -47,29 +47,48 @@ def get_product_detail(
                 "store_url": os.getenv("RAPIDAPI_SHOPIFY_STORE_URL")
             }
 
-        elif platform == "walmart":
-            url = f"{os.getenv('RAPIDAPI_WALMART_BASE_URL')}/product"
+        elif platform == "alibaba":
+            url = "https://alibaba-datahub.p.rapidapi.com/item_detail"
             headers = {
-                "X-RapidAPI-Key": os.getenv("RAPIDAPI_WALMART_KEY"),
-                "X-RapidAPI-Host": os.getenv("RAPIDAPI_WALMART_HOST")
+                "x-rapidapi-host": "alibaba-datahub.p.rapidapi.com",
+                "x-rapidapi-key": "ffe1e88834msh41af6c29c1ac06dp1ee8b9jsn2c659a15ac1d"
             }
-            params = {"usItemId": product_id}
+            params = {"itemId": product_id}
 
-        elif platform == "aliexpress":
-            url = f"{os.getenv('RAPIDAPI_ALIEXPRESS_BASE_URL')}/product"
-            headers = {
-                "X-RapidAPI-Key": os.getenv("RAPIDAPI_ALIEXPRESS_KEY"),
-                "X-RapidAPI-Host": os.getenv("RAPIDAPI_ALIEXPRESS_HOST")
-            }
-            params = {"productId": product_id}
+        
 
         response = requests.get(url, headers=headers, params=params, timeout=10)
         response.raise_for_status()
         data = response.json()
 
+        reviews_data = []
+        if platform == "amazon":
+            try:
+                reviews_url = f"{os.getenv('RAPIDAPI_AMAZON_BASE_URL')}/product-reviews"
+                reviews_params = {"asin": product_id}
+                reviews_response = requests.get(reviews_url, headers=headers, params=reviews_params, timeout=10)
+                
+                if reviews_response.status_code == 200:
+                    reviews_json = reviews_response.json()
+                    reviews_raw = reviews_json.get("data", {}).get("reviews", [])
+                    
+                    for review in reviews_raw[:10]:  # Limit to first 10 reviews
+                        processed_review = {
+                            "id": review.get("review_id", ""),
+                            "author": review.get("review_author", "Anonymous"),
+                            "rating": float(review.get("review_star_rating", 0)),
+                            "title": review.get("review_title", ""),
+                            "text": review.get("review_body", ""),
+                            "date": review.get("review_date", ""),
+                            "verified_purchase": review.get("is_verified_purchase", False),
+                            "helpful_votes": review.get("review_votes", 0)
+                        }
+                        reviews_data.append(processed_review)
+            except Exception as e:
+                print(f"Error fetching reviews: {e}")
+
         product_data = {}
         if platform == "amazon":
-            # Handle Amazon's specific response structure
             amazon_data = data.get("data", {})
             product_data = {
                 "id": amazon_data.get("asin", product_id),
@@ -81,7 +100,8 @@ def get_product_detail(
                 "rating": float(amazon_data.get("product_star_rating", 0)),
                 "rating_count": amazon_data.get("product_num_ratings", 0),
                 "availability": amazon_data.get("product_availability", "Unknown"),
-                "url": amazon_data.get("product_url", "#")
+                "url": amazon_data.get("product_url", "#"),
+                "reviews": reviews_data  # Add reviews to Amazon products
             }
         elif platform == "ebay":
             product_data = {
@@ -92,7 +112,7 @@ def get_product_detail(
                 "images": [img.get("imageUrl") for img in data.get("images", []) if img.get("imageUrl")],
                 "specifications": data.get("itemSpecifics", {})
             }
-        elif platform == "shopify":
+        elif platform == "target":
             product_data = {
                 "id": data.get("id", product_id),
                 "name": data.get("title", "Unknown Product"),
@@ -101,7 +121,7 @@ def get_product_detail(
                 "images": [img.get("src") for img in data.get("images", []) if img.get("src")],
                 "specifications": data.get("options", [])
             }
-        elif platform == "walmart":
+        elif platform == "Alibaba":
             product_data = {
                 "id": data.get("usItemId", product_id),
                 "name": data.get("name", "Unknown Product"),
@@ -110,25 +130,7 @@ def get_product_detail(
                 "images": data.get("imageInfo", {}).get("imageUrls", []),
                 "specifications": data.get("specifications", [])
             }
-        elif platform == "aliexpress":
-            product_data = {
-                "id": product_id,
-                "name": data.get("product_title", "Unknown Product"),
-                "price": float(data.get("app_sale_price", 0)) if data.get("app_sale_price") else 0,
-                "description": data.get("product_description", "No description available"),
-                "images": [data.get("image_url")] if data.get("image_url") else [],
-                "specifications": {
-                    "Store": data.get("store_name"),
-                    "Sales": data.get("volume"),
-                    "Original Price": data.get("original_price"),
-                    "Discount": data.get("discount"),
-                    **data.get("properties", {})
-                },
-                "rating": float(data.get("evaluate_rate", 0)) if data.get("evaluate_rate") else 0,
-                "rating_count": data.get("evaluation_count", 0),
-                "availability": "Available" if data.get("app_sale_price") else "Unknown",
-                "url": data.get("product_url", "#")
-            }
+    
 
         if not product_data.get("name"):
             raise HTTPException(

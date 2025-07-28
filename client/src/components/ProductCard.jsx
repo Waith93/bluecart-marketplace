@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useLocation } from "react-router-dom";
-import { Star, ChevronLeft, Loader2 } from 'lucide-react';
+import { Star, ChevronLeft, Loader2, ThumbsUp, ShieldCheck } from 'lucide-react';
 import Footer from "../components/footer";
 
-// Helper functions to handle different platform data structures
 const getProductName = (product, platform) => {
   switch (platform) {
-    case 'aliexpress':
+    case 'alibaba':
       return product.product_title || product.title || 'Unknown Product';
     case 'amazon':
       return product.name || product.title || 'Unknown Product';
@@ -17,7 +16,7 @@ const getProductName = (product, platform) => {
 
 const getProductImage = (product, platform) => {
   switch (platform) {
-    case 'aliexpress':
+    case 'alibaba':
       return product.image_url || product.images?.[0] || 'https://via.placeholder.com/300x200?text=Product+Image';
     case 'amazon':
       return product.images?.[0] || product.image || 'https://via.placeholder.com/300x200?text=Product+Image';
@@ -30,7 +29,7 @@ const getProductSpecs = (product, platform) => {
   const baseSpecs = {};
   
   switch (platform) {
-    case 'aliexpress':
+    case 'alibaba':
       baseSpecs.Price = product.app_sale_price || product.price || 'Price not available';
       baseSpecs.Rating = product.evaluate_rate || 'Not rated';
       baseSpecs['Original Price'] = product.original_price || 'N/A';
@@ -46,12 +45,61 @@ const getProductSpecs = (product, platform) => {
       baseSpecs.Rating = product.rating || 'Not rated';
   }
   
-  // Add any additional specifications
   return {
     ...baseSpecs,
     ...(product.specifications || {}),
     ...(product.specs || {})
   };
+};
+
+// Review component for displaying individual reviews
+const ReviewCard = ({ review }) => {
+  const renderStars = (rating) => {
+    return [1, 2, 3, 4, 5].map((star) => (
+      <Star
+        key={star}
+        size={16}
+        className={
+          star <= Math.floor(rating)
+            ? "fill-yellow-400 text-yellow-400"
+            : "text-gray-300"
+        }
+      />
+    ));
+  };
+
+  return (
+    <div className="border-b border-gray-200 pb-4 mb-4 last:border-b-0">
+      <div className="flex items-start justify-between mb-2">
+        <div className="flex items-center">
+          <div className="flex mr-2">
+            {renderStars(review.rating)}
+          </div>
+          <span className="text-sm font-medium text-gray-900">{review.author}</span>
+          {review.verified_purchase && (
+            <div className="ml-2 flex items-center text-green-600">
+              <ShieldCheck size={14} />
+              <span className="text-xs ml-1">Verified Purchase</span>
+            </div>
+          )}
+        </div>
+        <span className="text-sm text-gray-500">{review.date}</span>
+      </div>
+      
+      {review.title && (
+        <h4 className="font-medium text-gray-900 mb-1">{review.title}</h4>
+      )}
+      
+      <p className="text-gray-700 text-sm leading-relaxed mb-2">{review.text}</p>
+      
+      {review.helpful_votes > 0 && (
+        <div className="flex items-center text-sm text-gray-500">
+          <ThumbsUp size={14} />
+          <span className="ml-1">{review.helpful_votes} people found this helpful</span>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export const ProductCard = () => {
@@ -60,10 +108,10 @@ export const ProductCard = () => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('details');
 
-  // Get platform from query parameters
   const queryParams = new URLSearchParams(location.search);
-  const platform = queryParams.get('platform');
+  const platformFromQuery = queryParams.get('platform');
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -72,70 +120,85 @@ export const ProductCard = () => {
           throw new Error('Missing product ID');
         }
 
-        // Extract platform from ID if not provided in query params
-        let platformToUse = platform;
-        if (!platformToUse && id) {
-          // Try to extract platform from ID format (e.g., "amazon-B0B2D77YB8")
+        let platformToUse = platformFromQuery;
+        let productId = id;
+
+        if (id.includes('-')) {
           const parts = id.split('-');
-          if (parts.length >= 2) {
-            platformToUse = parts[0]; // "amazon" from "amazon-B0B2D77YB8"
+          const potentialPlatform = parts[0].toLowerCase();
+          
+          if (['alibaba', 'amazon', 'walmart'].includes(potentialPlatform)) {
+            platformToUse = potentialPlatform;
+            productId = parts.slice(1).join('-'); 
           }
         }
 
-        // Default to amazon if still no platform found
         if (!platformToUse) {
           platformToUse = 'amazon';
           console.warn('No platform specified, defaulting to amazon');
         }
 
-        console.log(`Fetching ${platformToUse} product with ID: ${id}`);
+        console.log(`Fetching ${platformToUse} product with ID: ${productId}`);
         
-        // Try different ID formats
-        let productId = id;
-        if (id.includes('-') && platformToUse) {
-          // Remove platform prefix if it exists (e.g., "amazon-B0B2D77YB8" -> "B0B2D77YB8")
-          const parts = id.split('-');
-          if (parts[0].toLowerCase() === platformToUse.toLowerCase()) {
-            productId = parts.slice(1).join('-');
-          }
-        }
-        
-        console.log(`Using product ID: ${productId} for platform: ${platformToUse}`);
         const url = `http://127.0.0.1:8000/products/${productId}?platform=${platformToUse}`;
+        console.log('API URL:', url);
         
         const response = await fetch(url);
         
         if (!response.ok) {
-          throw new Error(`API request failed with status ${response.status}`);
+          const errorText = await response.text();
+          throw new Error(`API request failed with status ${response.status}: ${errorText}`);
         }
 
         const data = await response.json();
         
-        console.log('API Response:', data); // Debug log
+        console.log('API Response:', data); 
         
         if (!data.success) {
           throw new Error(data.detail || 'Failed to fetch product details');
         }
 
-        // Check if product data exists
         if (!data.product || Object.keys(data.product).length === 0) {
           throw new Error('No product data found in API response');
         }
 
-        // Transform API response to match your component's expected format
-        const transformedProduct = {
-          id: id,
-          product_name: data.product.name || data.product.title || 'Unknown Product',
-          platform: platformToUse,
-          image_url: data.product.images?.[0] || data.product.image || 'https://via.placeholder.com/300x200?text=Product+Image',
-          specs: {
-            Price: data.product.price ? `${data.product.price.toFixed(2)}` : 'Price not available',
-            Rating: data.product.rating || 'Not rated',
-            ...(data.product.specifications || {}),
-            ...(data.product.specs || {})
-          },
-          rawData: data // Keep full API response for debugging
-        };
+        // Transform API response based on platform
+        let transformedProduct;
+        
+        if (platformToUse === 'alibaba') {
+          transformedProduct = {
+            id: id,
+            product_name: data.product.product_title || data.product.title || 'Unknown Product',
+            platform: platformToUse,
+            image_url: data.product.image_url || data.product.images?.[0] || 'https://via.placeholder.com/300x200?text=Product+Image',
+            specs: {
+              Price: data.product.app_sale_price || data.product.price || 'Price not available',
+              Rating: data.product.evaluate_rate || 'Not rated',
+              'Original Price': data.product.original_price || 'N/A',
+              'Sales Volume': data.product.volume || 'N/A',
+              'Store Name': data.product.store_name || 'N/A',
+              ...(data.product.specifications || {}),
+              ...(data.product.specs || {})
+            },
+            reviews: data.product.reviews || [],
+            rawData: data
+          };
+        } else {
+          transformedProduct = {
+            id: id,
+            product_name: data.product.name || data.product.title || 'Unknown Product',
+            platform: platformToUse,
+            image_url: data.product.images?.[0] || data.product.image || 'https://via.placeholder.com/300x200?text=Product+Image',
+            specs: {
+              Price: data.product.price ? `${data.product.price.toFixed(2)}` : 'Price not available',
+              Rating: data.product.rating || 'Not rated',
+              ...(data.product.specifications || {}),
+              ...(data.product.specs || {})
+            },
+            reviews: data.product.reviews || [],
+            rawData: data
+          };
+        }
 
         setProduct(transformedProduct);
       } catch (err) {
@@ -147,7 +210,7 @@ export const ProductCard = () => {
     };
 
     fetchProduct();
-  }, [id, platform]);
+  }, [id, platformFromQuery]);
 
   if (loading) {
     return (
@@ -169,10 +232,10 @@ export const ProductCard = () => {
             <h2 className="text-lg font-semibold text-red-800">Error Loading Product</h2>
             <p className="text-red-600">{error}</p>
             <p className="mt-2 text-sm text-gray-600">
-              Product ID: {id} | Platform: {platform || 'Not specified'}
+              Product ID: {id} | Platform: {id.split('-')[0] || 'Not specified'}
             </p>
             <p className="text-sm text-gray-500">
-              API URL: http://127.0.0.1:8000/products/{id}?platform={platform || 'amazon'}
+              API URL: http://127.0.0.1:8000/products/{id.includes('-') ? id.split('-').slice(1).join('-') : id}?platform={id.split('-')[0] || 'amazon'}
             </p>
             <button 
               onClick={() => window.location.reload()}
@@ -199,6 +262,8 @@ export const ProductCard = () => {
     );
   }
 
+  const hasReviews = product.platform === 'amazon' && product.reviews && product.reviews.length > 0;
+
   return (
     <div className="flex flex-col min-h-screen">
       <div className="max-w-4xl mx-auto py-8 px-4 flex-grow">
@@ -212,7 +277,7 @@ export const ProductCard = () => {
           </button>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-2 gap-8 mb-8">
           <div>
             <img
               src={product.image_url}
@@ -224,6 +289,18 @@ export const ProductCard = () => {
 
           <div>
             <h1 className="text-3xl font-bold mb-2">{product.product_name}</h1>
+            
+            {/* Platform badge */}
+            <div className="mb-4">
+              <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                product.platform === 'alibaba' ? 'bg-orange-100 text-orange-800' :
+                product.platform === 'amazon' ? 'bg-blue-100 text-blue-800' :
+                'bg-gray-100 text-gray-800'
+              }`}>
+                {product.platform.charAt(0).toUpperCase() + product.platform.slice(1)}
+              </span>
+            </div>
+
             <div className="flex items-center mb-4">
               <div className="flex mr-2">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -231,7 +308,7 @@ export const ProductCard = () => {
                     key={star}
                     size={20}
                     className={
-                      star <= Math.floor(product.specs.Rating || 0)
+                      star <= Math.floor(parseFloat(product.specs.Rating) || 0)
                         ? "fill-yellow-400 text-yellow-400"
                         : "text-gray-300"
                     }
@@ -248,7 +325,7 @@ export const ProductCard = () => {
                 {product.specs.Price || 'Price not available'}
               </h2>
               <button className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors">
-                View on {product.platform}
+                View on {product.platform.charAt(0).toUpperCase() + product.platform.slice(1)}
               </button>
             </div>
 
@@ -265,7 +342,57 @@ export const ProductCard = () => {
           </div>
         </div>
 
-        {/* Debug section - remove in production */}
+        {hasReviews && (
+          <div className="mb-6">
+            <div className="border-b border-gray-200">
+              <nav className="-mb-px flex space-x-8">
+                <button
+                  onClick={() => setActiveTab('details')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'details'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Product Details
+                </button>
+                <button
+                  onClick={() => setActiveTab('reviews')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'reviews'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Customer Reviews ({product.reviews.length})
+                </button>
+              </nav>
+            </div>
+          </div>
+        )}
+
+        {hasReviews && activeTab === 'reviews' ? (
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <h2 className="text-xl font-semibold mb-6">Customer Reviews</h2>
+            <div className="space-y-4">
+              {product.reviews.map((review, index) => (
+                <ReviewCard key={review.id || index} review={review} />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <h2 className="text-xl font-semibold mb-4">Product Information</h2>
+            <div className="prose max-w-none">
+              <p className="text-gray-700 leading-relaxed">
+                {product.rawData?.product?.description || 
+                 product.rawData?.product?.product_description ||
+                 'No description available for this product.'}
+              </p>
+            </div>
+          </div>
+        )}
+
         {process.env.NODE_ENV === 'development' && (
           <div className="mt-8 bg-gray-50 p-4 rounded-lg">
             <details>

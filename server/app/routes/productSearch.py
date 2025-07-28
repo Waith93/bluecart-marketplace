@@ -27,13 +27,15 @@ async def fetch_fake_target_api(search_term: str) -> List[dict]:
                         "category": product["category"],
                         "rating": product.get("rating", {}).get("rate", 0),
                         "source_api": "target",
-                        "url": f"https://fakestoreapi.com/products/{product['id']}"
+                        "url": f"https://fakestoreapi.com/products/{product['id']}",
+                        "reviews": product.get("reviews", 0)
+
                     }
                     for product in products
                     if search_term.lower() in product["title"].lower() or
                        search_term.lower() in product["category"].lower()
                 ]
-                return filtered_products[:10]  # Limit to 10 results
+                return filtered_products[:10] 
             else:
                 print(f"Target API returned status: {response.status_code}")
                 return []
@@ -42,7 +44,6 @@ async def fetch_fake_target_api(search_term: str) -> List[dict]:
         return []
 
 async def fetch_dummyjson_api(search_term: str) -> List[dict]:
-    """Fetch products from DummyJSON API"""
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(f"https://dummyjson.com/products/search?q={search_term}&limit=10")
@@ -109,7 +110,6 @@ async def search_products(
                 print(f"Database commit error: {commit_error}")
                 db.rollback()
             
-            # Return the data in a format consistent with other platforms
             return {
                 "products": data,
                 "total_count": len(data),
@@ -117,7 +117,6 @@ async def search_products(
                 "query": query
             }
 
-        # Handle other platforms with synchronous requests
         elif platform == "amazon":
             url = f"{os.getenv('RAPIDAPI_AMAZON_BASE_URL')}/search"
             headers = {
@@ -146,7 +145,9 @@ async def search_products(
                         product_name=item.get("title") or "Unnamed",
                         platform=platform,
                         image_url=item.get("image") or None,
-                        specs=item  
+                        specs=item,
+                       reviews=item.get("reviews", 0)
+
                     )
                     db.add(new_product)
                 except Exception as db_error:
@@ -172,7 +173,7 @@ async def search_products(
             url = "https://alibaba-datahub.p.rapidapi.com/item_search"
             headers = {
                 "x-rapidapi-host": "alibaba-datahub.p.rapidapi.com",
-                "x-rapidapi-key": "5b448cc458mshd5487c3db1ed748p1cb6afjsnb1ac04f810b8"
+                "x-rapidapi-key": "ffe1e88834msh41af6c29c1ac06dp1ee8b9jsn2c659a15ac1d"
             }
             params = {
                 "q": query,  
@@ -182,7 +183,6 @@ async def search_products(
         else:
             raise HTTPException(status_code=400, detail="Unsupported platform.")
 
-        # Here for  all other platforms excluding fake store api, make the API request
         print(f"Making request to {url} with params {params}")
         response = requests.get(url, headers=headers, params=params, timeout=30)
 
@@ -214,7 +214,8 @@ async def search_products(
                         product_name=item.get("title") or "Unnamed",
                         platform=platform,
                         image_url=item.get("image") or None,
-                        specs=item  
+                        specs=item,
+                         
                     )
                     db.add(new_product)
                 except Exception as db_error:
