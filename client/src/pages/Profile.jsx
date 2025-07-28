@@ -42,7 +42,6 @@ const Sidebar = ({ setActiveTab, userData }) => {
 // Content Component
 const Content = ({ activeTab, userData, setUserData }) => {
   const [formData, setFormData] = useState({
-    name: userData?.name || "",
     email: userData?.email || "",
     username: userData?.username || "",
   });
@@ -53,7 +52,6 @@ const Content = ({ activeTab, userData, setUserData }) => {
   // Form validation function here
   const validate = () => {
     const errors = {};
-    if (!formData.name.trim()) errors.name = "Name is required.";
     if (!formData.username.trim()) errors.username = "Username is required.";
     if (!formData.email.trim()) errors.email = "Email is required.";
     return errors;
@@ -86,7 +84,9 @@ const Content = ({ activeTab, userData, setUserData }) => {
 
       if (!response.ok) throw new Error("Network error");
 
-      localStorage.setItem("user_data", JSON.stringify(formData));
+const updatedData = await response.json();
+localStorage.setItem("user_data", JSON.stringify(updatedData));
+setUserData(updatedData);
       setUserData(formData);
 
       setSuccessMessage("Profile updated successfully!");
@@ -148,20 +148,7 @@ const Content = ({ activeTab, userData, setUserData }) => {
       {activeTab === "Edit profile" && (
         <div className="bg-white p-6 rounded shadow max-w-lg">
           <form className="space-y-4" onSubmit={handleSubmit}>
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">Full Name</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className={`w-full border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 ${
-                  formErrors.name ? "border-red-500" : "border-gray-300"
-                }`}
-                placeholder="John Doe"
-              />
-              {formErrors.name && <p className="text-red-500 text-sm mt-1">{formErrors.name}</p>}
-            </div>
+            
             <div>
               <label className="block text-gray-700 font-medium mb-1">Username</label>
               <input
@@ -172,7 +159,7 @@ const Content = ({ activeTab, userData, setUserData }) => {
                 className={`w-full border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 ${
                   formErrors.username ? "border-red-500" : "border-gray-300"
                 }`}
-                placeholder="John Doe"
+                placeholder="Enter your username"
               />
               {formErrors.username && <p className="text-red-500 text-sm mt-1">{formErrors.username}</p>}
             </div>
@@ -186,7 +173,7 @@ const Content = ({ activeTab, userData, setUserData }) => {
                 className={`w-full border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 ${
                   formErrors.email ? "border-red-500" : "border-gray-300"
                 }`}
-                placeholder="johndoe@example.com"
+                placeholder="Enter your email"
               />
               {formErrors.email && <p className="text-red-500 text-sm mt-1">{formErrors.email}</p>}
             </div>

@@ -5,7 +5,7 @@ from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer
 from app.models import User
-from app.schema import UserCreate, UserLogin, Token, UserProfile
+from app.schema import UserCreate, UserLogin, Token, UserProfile, ProfileUpdateRequest
 from app.database import get_db
 from app.config import settings
 from pydantic import BaseModel  
@@ -97,5 +97,35 @@ def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
 
 @router.get("/profile", response_model=UserProfile)
 def get_user_profile(current_user: User = Depends(get_current_user)):
+    return current_user
+
+@router.patch("/profile", response_model=UserProfile)
+def update_user_profile(
+    profile_data: ProfileUpdateRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if profile_data.username != current_user.username:
+        existing_username = db.query(User).filter(
+            User.username == profile_data.username,
+            User.id != current_user.id
+        ).first()
+        if existing_username:
+            raise HTTPException(status_code=400, detail="Username already taken.")
+    
+    if profile_data.email != current_user.email:
+        existing_email = db.query(User).filter(
+            User.email == profile_data.email,
+            User.id != current_user.id
+        ).first()
+        if existing_email:
+            raise HTTPException(status_code=400, detail="Email already in use.")
+    
+    current_user.username = profile_data.username
+    current_user.email = profile_data.email
+    
+    db.commit()
+    db.refresh(current_user)
+    
     return current_user
 

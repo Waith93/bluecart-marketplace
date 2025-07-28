@@ -153,3 +153,15 @@ class UserProfile(BaseModel):
 
     class Config:
         orm_mode = True  #
+
+class UserProfile(BaseModel):
+    id: int
+    username: str
+    email: str  #
+    
+    class Config:
+        orm_mode = True
+
+class ProfileUpdateRequest(BaseModel):
+    username: str
+    email: str        
