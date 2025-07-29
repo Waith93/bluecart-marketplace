@@ -65,7 +65,7 @@ bluecart-marketplace/
 
 #### Clone the repository
 ```bash
-git clone https://github.com/your-username/bluecart-marketplace.git 
+git clone https://github.com/Waith93/bluecart-marketplace
 cd bluecart-marketplace
 ```
 
