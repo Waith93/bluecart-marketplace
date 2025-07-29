@@ -35,7 +35,7 @@ function SignupForm() {
     };
 
     try {
-      const response = await axios.post("http://localhost:8000/auth/signup", userData, {
+      const response = await axios.post("https://bluecart-marketplace-mjzs.onrender.com/auth/signup", userData, {
         headers: {
           "Content-Type": "application/json", 
         },

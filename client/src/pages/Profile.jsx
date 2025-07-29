@@ -108,7 +108,7 @@ const Content = ({ activeTab, userData, setUserData }) => {
     const token = localStorage.getItem("access_token");
 
     try {
-      const response = await fetch("http://localhost:8000/auth/profile", {
+      const response = await fetch("https://bluecart-marketplace-mjzs.onrender.com/auth/profile", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -154,7 +154,7 @@ const Content = ({ activeTab, userData, setUserData }) => {
       console.log("Token found:", token.substring(0, 20) + "..."); 
 
       try {
-        const response = await fetch("http://localhost:8000/auth/profile", {
+        const response = await fetch("https://bluecart-marketplace-mjzs.onrender.com/auth/profile", {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",

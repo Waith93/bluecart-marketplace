@@ -59,7 +59,7 @@ function SearchBarPage() {
   console.log("=== SAVE ATTEMPT COMPLETE ===");
 };
 
-  const API_BASE_URL = 'http://127.0.0.1:8000';
+  const API_BASE_URL = 'https://bluecart-marketplace-mjzs.onrender.com';
   const ITEMS_PER_PAGE = 9;
   
   const sortOptions = ['Best Rating', 'High Price', 'Low Price', 'Best Cost-Benefit'];// added cost benefit option

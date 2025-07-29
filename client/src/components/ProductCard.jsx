@@ -140,7 +140,7 @@ export const ProductCard = () => {
 
         console.log(`Fetching ${platformToUse} product with ID: ${productId}`);
         
-        const url = `http://127.0.0.1:8000/products/${productId}?platform=${platformToUse}`;
+        const url = `https://bluecart-marketplace-mjzs.onrender.com/products/${productId}?platform=${platformToUse}`;
         console.log('API URL:', url);
         
         const response = await fetch(url);
@@ -235,7 +235,7 @@ export const ProductCard = () => {
               Product ID: {id} | Platform: {id.split('-')[0] || 'Not specified'}
             </p>
             <p className="text-sm text-gray-500">
-              API URL: http://127.0.0.1:8000/products/{id.includes('-') ? id.split('-').slice(1).join('-') : id}?platform={id.split('-')[0] || 'amazon'}
+              API URL: https://bluecart-marketplace-mjzs.onrender.com/products/{id.includes('-') ? id.split('-').slice(1).join('-') : id}?platform={id.split('-')[0] || 'amazon'}
             </p>
             <button 
               onClick={() => window.location.reload()}
