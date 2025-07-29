@@ -12,9 +12,9 @@ class Settings(BaseSettings):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        # Debug: print the loaded values
         print("SECRET_KEY:", os.getenv("SECRET_KEY"))
         print("DATABASE_URL:", os.getenv("DATABASE_URL"))
         print("RAPIDAPI_AMAZON_KEY:", os.getenv("RAPIDAPI_AMAZON_KEY"))
 
 settings = Settings()
-
