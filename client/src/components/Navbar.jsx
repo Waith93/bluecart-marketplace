@@ -1,6 +1,6 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Menu, X, User, LogOut, Home, Search, Clock } from "lucide-react";
+import { Menu, X, User, LogOut, Home, Search, Clock, Phone } from "lucide-react";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -42,10 +42,42 @@ const Navbar = () => {
     navigate("/");
   };
 
+  const scrollToFooter = () => {
+    const footer = document.getElementById('footer');
+    if (footer) {
+      footer.scrollIntoView({ behavior: 'smooth' });
+    }
+    setIsMenuOpen(false); // Close mobile menu if open
+  };
+
   const isActive = (path) => {
     if (path === "/" && location.pathname === "/") return true;
     if (path !== "/" && location.pathname.startsWith(path)) return true;
     return false;
+  };
+
+  const ContactItem = ({ children, icon: Icon, mobile = false, onClick }) => {
+    if (mobile) {
+      return (
+        <button
+          onClick={onClick}
+          className="flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:text-blue-600 w-full text-left"
+        >
+          <Icon size={18} />
+          <span className="font-medium">{children}</span>
+        </button>
+      );
+    }
+
+    return (
+      <button
+        onClick={onClick}
+        className="flex items-center space-x-2 px-4 py-2 rounded-full font-medium transition-all duration-300 text-gray-700 hover:bg-gradient-to-r hover:from-blue-100 hover:to-purple-100 hover:text-blue-600 hover:shadow-md hover:scale-105"
+      >
+        <Icon size={16} />
+        <span>{children}</span>
+      </button>
+    );
   };
 
   const NavItem = ({ to, children, icon: Icon, mobile = false }) => {
@@ -104,9 +136,8 @@ const Navbar = () => {
           <div className="hidden md:flex items-center space-x-2 absolute left-1/2 transform -translate-x-1/2">
             <NavItem to="/" icon={Home}>Home</NavItem>
             <NavItem to="/search" icon={Search}>Search</NavItem>
-            {isLoggedIn && (
-              <NavItem to="/history" icon={Clock}>History</NavItem>
-            )}
+            <NavItem to="/history" icon={Clock}>History</NavItem>
+            <ContactItem icon={Phone} onClick={scrollToFooter}>Contact Us</ContactItem>
           </div>
 
           {/* Auth Section - Far Right */}
@@ -167,9 +198,8 @@ const Navbar = () => {
             <div className="space-y-3">
               <NavItem to="/" icon={Home} mobile>Home</NavItem>
               <NavItem to="/search" icon={Search} mobile>Search</NavItem>
-              {isLoggedIn && (
-                <NavItem to="/history" icon={Clock} mobile>History</NavItem>
-              )}
+              <NavItem to="/history" icon={Clock} mobile>History</NavItem>
+              <ContactItem icon={Phone} mobile onClick={scrollToFooter}>Contact Us</ContactItem>
               
               {isLoggedIn ? (
                 <>

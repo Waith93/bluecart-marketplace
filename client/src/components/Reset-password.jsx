@@ -33,7 +33,7 @@ function ResetPassword() {
 
   return (
     <>
-    <div style={{ backgroundColor: "#E5F3FD" }} className="py-10 px-4 flex flex-col items-center">
+<div className="min-h-screen px-4 py-6" style={{backgroundColor: '#E5F3FD'}}>
 <div className="w-full max-w-md bg-white p-6 rounded-2xl shadow-md flex flex-col justify-center">
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
           Reset your password here!
