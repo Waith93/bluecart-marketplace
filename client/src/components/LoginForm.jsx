@@ -58,7 +58,7 @@ function LoginForm() {
 
 
   return (
-    <div className="bg-gray-50 py-10 px-4 flex flex-col items-center">
+    <div style={{ backgroundColor: "#E5F3FD" }} className="py-10 px-4 flex flex-col items-center">
       <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-md">
         <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">
           Log into your account

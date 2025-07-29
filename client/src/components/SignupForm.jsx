@@ -49,7 +49,7 @@ function SignupForm() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
+    <div style={{ backgroundColor: "#E5F3FD" }} className="py-10 px-4 flex flex-col items-center">
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md border border-gray-300 mb-6">
         <h2 className="text-2xl font-semibold mb-6 text-center text-gray-800">
           Create your account today!
