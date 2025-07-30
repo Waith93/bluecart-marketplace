@@ -28,9 +28,11 @@ const Footer = () => {
             <a href="https://www.ebay.com" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition-transform">
               <img src="https://upload.wikimedia.org/wikipedia/commons/1/1b/EBay_logo.svg" alt="eBay" className="h-6 opacity-80 hover:opacity-100" />
             </a>
-            <a href="https://www.shopify.com" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition-transform">
-              <img src="https://cdn.worldvectorlogo.com/logos/shopify.svg" alt="Shopify" className="h-6 opacity-80 hover:opacity-100" />
-            </a>
+           <a href="https://www.target.com" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition-transform">
+  <span className="text-3xl">🎯</span>
+</a>
+
+
           </div>
         </div>
 
