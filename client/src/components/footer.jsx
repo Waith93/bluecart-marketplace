@@ -88,7 +88,7 @@ const Footer = () => {
           </div>
           {/* Social Icons */}
           <div className="flex mt-4 space-x-4 text-gray-500">
-            <a href="https://github.com/bluecart" target="_blank" rel="noopener noreferrer" className="hover:text-gray-800 text-xl">
+            <a href="https://github.com/Waith93/bluecart-marketplace" target="_blank" rel="noopener noreferrer" className="hover:text-gray-800 text-xl">
               <FaGithub />
             </a>
             <a href="https://twitter.com/bluecart" target="_blank" rel="noopener noreferrer" className="hover:text-blue-500 text-xl">
