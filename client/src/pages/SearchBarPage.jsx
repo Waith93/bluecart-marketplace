@@ -11,7 +11,7 @@ function SearchBarPage() {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [sort, setSort] = useState({ open: false, selected: "Best Rating" });
-  const [search, setSearch] = useState({ query: "laptop", loading: false, error: null });
+const [search, setSearch] = useState({ query: "", loading: false, error: null });
   const [products, setProducts] = useState([]);
   const navigate = useNavigate();
 
@@ -771,10 +771,7 @@ if (allProducts.length > 0) {
   console.log('Navigating to product detail page for:', product.id);
 }
 
-  useEffect(() => { 
-    console.log('Initial fetch on component mount');
-    fetchProducts(); 
-  }, []);
+  
 
   const filteredProducts = products.filter(product => {
     if (filters.rating !== null && Math.floor(product.rating) !== filters.rating) return false;
