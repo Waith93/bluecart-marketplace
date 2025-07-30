@@ -801,9 +801,10 @@ if (allProducts.length > 0) {
     }
   });
 
-  const topMarginalBenefitProducts = [...filteredProducts] 
-    .sort((a, b) => (b.costBenefit - averageCostBenefit) - (a.costBenefit - averageCostBenefit))
-    .slice(0, 3);
+  const topMarginalBenefitProducts = [...filteredProducts]
+  .filter(product => product.costBenefit > averageCostBenefit) 
+  .sort((a, b) => (b.costBenefit - averageCostBenefit) - (a.costBenefit - averageCostBenefit))
+  .slice(0, 3);
 
   const totalPages = Math.ceil(sortedProducts.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
