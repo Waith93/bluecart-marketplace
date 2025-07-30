@@ -2,6 +2,10 @@
 
 **BlueCart Marketplace** is a full-stack web application that allows users to search, compare, and analyze product prices across multiple e-commerce platforms (Amazon, eBay, Alibaba, etc.). The app is built with **React + Redux Toolkit** on the frontend and **FastAPI** on the backend, with a **PostgreSQL** database.
 
+### 🚀 Live Demo 
+
+**Try the app live here**: [BlueCart Marketplace](https://bluecart-marketplace-frontend.onrender.com)
+
 ---
 
 ## 🚀 Features
@@ -14,7 +18,28 @@
 - ⭐ Review system for products  
 - 🌐 Live crawling & API integration (Amazon, Alibaba, etc.)
 
+---
+
+## 🏠 Homepage
+A clean, modern landing page showcasing featured products and categories. Users can login or signup.
+
 ![Homepage Screenshot](./client/assets/homepage.PNG)
+
+---
+
+## 🔍 Search Page
+
+Users can search for products across multiple marketplaces. Results can be filtered by price, platform (e.g., Amazon, eBay), and category.
+
+![Searchpage Screenshot](./client/assets/search.PNG)
+
+---
+
+## 📄 Product Details
+
+View detailed product information including name, image, current price, rating and customer reviews. Ideal for making smart buying decisions.
+
+![Productpage Screenshot](./client/assets/product.PNG)
 
 ---
 
