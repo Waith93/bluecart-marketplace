@@ -173,7 +173,7 @@ async def search_products(
             url = "https://alibaba-datahub.p.rapidapi.com/item_search"
             headers = {
                 "x-rapidapi-host": "alibaba-datahub.p.rapidapi.com",
-                "x-rapidapi-key": "6c3af4bd6fmsh67f9c7261adca0ep165293jsnf8b48c3fb6b7"
+                "x-rapidapi-key": "2aa54c184emshc1c02edfde00635p124c47jsn50d936db6fbe"
             }
             params = {
                 "q": query,  
